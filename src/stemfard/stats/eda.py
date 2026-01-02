@@ -1,7 +1,9 @@
 from typing import Literal
 
-from numpy import array, cumsum, int64, ndarray
+from numpy import array, cumsum, float64, int64, ndarray
 from pandas import DataFrame
+
+from stemfard.core.results import Result
 
 
 def sta_eda_grouped(
@@ -35,11 +37,18 @@ def sta_eda_grouped(
         df_series.update(
             {"Cumulative frequency": cumsum(freq)}
         )
+        
+    midpoint = array(
+        object=[(lc_limits[k] + uc_limits[k]) / 2 for k in range(n)],
+        dtype=float64
+    )
+    
+    answer = sum(midpoint * freq) / sum(freq)
     
     dframe = DataFrame(data=df_series)
     
-    return dframe
-
+    return Result(table=dframe, answer=answer)
+    
 
 def sta_eda_ungrouped(
     data: list[int | float] | ndarray,
