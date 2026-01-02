@@ -18,6 +18,10 @@ class Result:
         """Return all attribute names."""
         return list(self.__dict__.keys())
 
+    def values(self):
+        """Return all attribute values."""
+        return list(self.__dict__.values())
+
     def items(self):
         """Return all attribute-name / value pairs."""
         return self.__dict__.items()
@@ -28,5 +32,6 @@ class Result:
             print(f"{key}: {value}")
 
     def __repr__(self) -> str:
+        """Print the attributes"""
         attrs = ", ".join(self.keys())
         return f"Result({attrs})"
