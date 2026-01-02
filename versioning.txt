@@ -1,0 +1,55 @@
+? Check the following if n is not 8 for given data
+
+>>> df = stm.sta_dataset_read(name='cotes_n8')
+>>> x = df['x'].values
+>>> y = df['y'].values
+>>> result = stm.int_cotes_data(x, y, points=5, closed_methods=True)
+
+? 
+
+<major>.<minor>.<patch><pre-release identifier><pre-release number>
+a for alpha (early, incomplete release)
+b for beta (more complete but potentially unstable)
+rc for release candidate (nearly complete, potential final release)
+
+2.1.0a1
+2.1.0b2
+2.1.0rc1
+
+Example
+Initial Release:
+
+Version: 0.0.1
+This is the first official release.
+First Alpha Release:
+
+Version: 0.0.2a1
+This indicates the first alpha pre-release following the initial release.
+Second Alpha Release:
+
+Version: 0.0.2a2
+This is the second alpha pre-release, indicating further development from 0.0.2a1.
+First Beta Release:
+
+Version: 0.0.2b1
+This is the first beta pre-release, suggesting the package is more stable but not yet ready for final release.
+Second Beta Release:
+
+Version: 0.0.2b2
+The second beta pre-release, indicating further progress.
+First Release Candidate:
+
+Version: 0.0.2rc1
+This is the first release candidate, indicating the package is nearing completion and ready for final testing.
+Second Release Candidate:
+
+Version: 0.0.2rc2
+The second release candidate, suggesting minor fixes or changes.
+Next Stable Release:
+
+Version: 0.0.2
+This is the final stable release after completing the pre-release phase.
+Patch for Stable Release:
+
+Version: 0.0.3
+A minor update or bug fix after 0.0.2.
