@@ -6,7 +6,7 @@ class Result:
 
     - Attributes are created dynamically based on what the function returns.
     - Supports dot access: res.attr
-    - Provides .keys(), .items(), and a summary method.
+    - Provides .keys(), .items(), .values(), and a summary method.
     """
 
     def __init__(self, **kwargs: Any):
