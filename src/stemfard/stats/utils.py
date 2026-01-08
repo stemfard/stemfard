@@ -1,3 +1,6 @@
+from numpy import ndarray
+
+
 class FrequencyTallyWarning(UserWarning):
     """
     Allow users to filter warnings as follows.

@@ -61,10 +61,13 @@ __author__ = 'STEM Research'
 __credits__ = 'STEM Research'
 __email__ = "stemfard@stemfard.org"
 
-from .stats import sta_eda_grouped, sta_eda_ungrouped, sta_correlation
+from .stats import (
+    FrequencyTallyWarning,
+    sta_freq_tally, sta_eda_grouped, sta_eda_ungrouped, sta_correlation
+)
 
 #===========================================================================#
 #                                                                           #
-# STEM RESEARCH :: AI . APIs . Cloud :: https://stemfard.org        #
+# STEM RESEARCH :: AI . APIs . Cloud :: https://stemfard.stemfard.org       #
 #																			#
 #===========================================================================#

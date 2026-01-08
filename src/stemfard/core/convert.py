@@ -8,7 +8,8 @@ from pandas import DataFrame, Series
 def to_numeric(
     data: Sequence[Any],
     kind: Literal["array", "series", "dataframe"] = "array",
-    dtype: Any = float
+    dtype: Any = float,
+    param_name: str = "data"
 ) -> ndarray | Series | DataFrame:
     """
     Conversion of input to numeric ndarray, Pandas Series, or DataFrame.
@@ -23,6 +24,8 @@ def to_numeric(
         Type of object to return.
     dtype : type, default float
         Desired numeric type.
+    param_name : str, default='data'
+        Name to be used in error messages.
 
     Returns
     -------
@@ -45,7 +48,8 @@ def to_numeric(
             return Series(data, dtype=dtype)
         except (ValueError, TypeError) as e:
             raise ValueError(
-                f"Cannot convert 'data' to Series with dtype {dtype}"    
+                f"Cannot convert {param_name!r} to Series with dtype "
+                f"{dtype}"    
             ) from e
 
     # ----------- 2D DataFrame -----------
@@ -54,7 +58,8 @@ def to_numeric(
             return DataFrame(data, dtype=dtype)
         except (ValueError, TypeError) as e:
             raise ValueError(
-                f"Cannot convert 'data' to DataFrame with dtype {dtype}"
+                f"Cannot convert {param_name!r} to DataFrame with dtype "
+                f"{dtype}"
             ) from e
 
     # ----------- ndarray (1D or 2D) -----------
@@ -62,7 +67,6 @@ def to_numeric(
         try:
             return asarray(data, dtype=dtype)
         except (ValueError, TypeError) as e:
-            # Fallback for nested generators or ragged sequences
             try:
                 return array(
                     a=[asarray(row, dtype=dtype) for row in data],
@@ -70,5 +74,6 @@ def to_numeric(
                 )
             except (ValueError, TypeError):
                 raise ValueError(
-                    f"Cannot convert 'data' to ndarray with dtype {dtype}"    
+                    f"Cannot convert {param_name!r} to a 1D array with dtype "
+                    f"{dtype}"  
                 ) from e
