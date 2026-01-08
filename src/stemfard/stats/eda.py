@@ -786,7 +786,7 @@ def sta_freq_tally(
         class_limits=dframe["Class"].values,
         freq=freq_col.values,
         cumfreq=freq_cumsum.values,
-        col_names=dframe.columns,
+        columns=dframe.columns,
         stats = ResultDict(
             nrows=nrows,
             ncols=ncols,
