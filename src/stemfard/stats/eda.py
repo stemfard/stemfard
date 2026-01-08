@@ -1,8 +1,10 @@
 from enum import Enum
-import statistics
 import warnings
 
-from numpy import arange, asarray, bincount, ceil, char, clip, cumsum, digitize, empty, float64, floor, mod, nan, ndarray
+from numpy import (
+    arange, asarray, bincount, ceil, char, clip, cumsum, digitize, empty,
+    float64, floor, mod, nan, ndarray
+)
 from numpy.typing import NDArray
 from pandas import DataFrame, concat
 from stemcore import numeric_format, str_data_join_contd
@@ -12,8 +14,7 @@ from verifyparams import (
 )
 
 from stemfard.core.convert import to_numeric
-from stemfard.core.results import ResultDict
-from stemfard.core.utils import FrequencyTallyWarning
+from stemfard.core.utils_classes import FrequencyTallyWarning, ResultDict
 
 
 class StatisticType(Enum):
@@ -524,10 +525,11 @@ def sta_freq_tally(
     decimals: int = 4
 ) -> DataFrame:
     """
-    Compute a statistical frequency tally of a dataset.
+    Compute a grouped frequency distribution (frequency tally).
 
-    Generates class intervals, counts frequency of observations in each 
-    class, and optionally displays individual values or tally marks.
+    This function groups one-dimensional numeric data into class intervals
+    of fixed width, computes frequencies, and returns a structured result
+    containing a formatted frequency table and summary statistics.
 
     Parameters
     ----------
@@ -536,79 +538,116 @@ def sta_freq_tally(
     class_width : int or float
         Width of each class interval.
     start_from : int or float, optional
-        Lower bound of the first class. If None, the first class starts at
-        the floor of the minimum data value rounded to the nearest multiple
-        of `class_width`.
+        Lower bound of the first class. If ``None``, the first class starts at
+        the floor of the minimum value rounded down to the nearest multiple
+        of ``class_width``.
     show_values : bool, default False
-        If True, display the individual values in each class (only if
-        the maximum frequency is 50 or less for readability).
+        If ``True``, include a column listing individual values in each class.
+        Values are shown only if the maximum class frequency does not exceed 50.
     include_cumfreq : bool, default False
-        If True, add a cumulative frequency column.
+        If ``True``, include a cumulative frequency column.
     decimals : int, default 4
-        Number of decimal places for formatting class limits and values.
+        Number of decimal places used when formatting class limits and values.
 
     Returns
     -------
     result : ResultDict
-        A structured object containing:
-        - `table` : pandas.DataFrame with columns `Class`, `Tally`, `Frequency`
-                     (and `Values` if `show_values` is True)
-        - `class_limits` : str, placeholder for future use
-        - `freq` : ndarray, frequencies per class
-        - `total_freq` : int, sum of all frequencies
-        - `col_names` : Index of column names in the table
+        Dictionary-like result object with attribute access, containing:
+
+        table : pandas.DataFrame
+            Frequency table with columns:
+
+            - ``Class`` : str
+                Class interval labels.
+            - ``Frequency`` : int
+                Frequency per class.
+            - ``Tally`` : str, optional
+                Tally marks grouped in fives (omitted if max frequency > 50).
+            - ``Values`` : str, optional
+                Individual values per class (shown only if ``show_values=True``
+                and max frequency ≤ 50).
+            - ``Cum. Frequency`` : int, optional
+                Cumulative frequency (included if ``include_cumfreq=True``).
+
+        class_limits : ndarray
+            Array of class interval labels.
+        freq : ndarray
+            Frequencies per class.
+        cumfreq : ndarray
+            Cumulative frequencies.
+        col_names : pandas.Index
+            Column names of the frequency table.
+        stats : ResultDict
+            Summary statistics with fields:
+
+            - ``nrows`` : int
+                Number of rows in the table.
+            - ``ncols`` : int
+                Number of columns in the table.
+            - ``n`` : int
+                Total number of observations.
+            - ``min`` : float
+                Minimum value.
+            - ``max`` : float
+                Maximum value.
+            - ``range`` : float
+                Data range.
+            - ``mean`` : float
+                Arithmetic mean.
+            - ``var`` : float
+                Variance.
+            - ``std`` : float
+                Standard deviation.
 
     Raises
     ------
     ValueError
-        If `data` is not one-dimensional.
+        If ``data`` is not one-dimensional.
     TypeError
-        If input cannot be converted to numeric values.
+        If input values cannot be converted to numeric form.
 
-    Warnings
-    --------
+    Warns
+    -----
     FrequencyTallyWarning
-        - If `start_from` excludes values below it, a warning lists the excluded values.
-        - If maximum frequency exceeds 50, the `Tally` and `Values` columns are omitted
-          for readability.
+        - If values below ``start_from`` are excluded, the excluded values
+          are reported.
+        - If the maximum class frequency exceeds 50, the ``Tally`` and
+          ``Values`` columns are omitted for readability.
 
     Notes
     -----
-    - Class intervals are closed on the left and open on the right.
-    - Tally marks are grouped in fives for quick visual inspection.
-    - Values are formatted to remove trailing zeros and decimal points when unnecessary.
-    - This function returns a `ResultDict` object, which allows dot-access
-      to table data and metadata.
+    - Class intervals are left-closed and right-open.
+    - The final class is dropped if its frequency is zero.
+    - Tally marks are grouped in fives using visual separators.
+    - Returned results use a ``ResultDict`` container, that supports 
+      both key-based and attribute-based access to stored values..
 
     Examples
     --------
-    >>> import numpy as np
-    >>> import stemfard as stm
-    >>> 
     >>> data = [
         38, 40, 54, 43, 43, 56, 46, 32, 37, 38, 52, 45, 45, 43, 38, 56, 46,
         26, 48, 38, 33, 40, 34, 36, 37, 29, 49, 43, 33, 52, 45, 40, 49, 44,
         41, 42, 46, 42, 40, 39, 36, 40, 32, 59, 52, 33, 39, 38, 48, 41
     ]
-    >>> result = sta_freq_tally(data, class_width=5)
+    >>> result = stm.sta_freq_tally(data, class_width=5, include_cumfreq=True)
     >>> result.table
-         Class                  Tally  Frequency
-    1  25 - 29                     //          2
-    2  30 - 34              ///// . /          6
-    3  35 - 39      ///// . ///// . /         11
-    4  40 - 44   ///// . ///// . ////         14
-    5  45 - 49        ///// . ///// .         10
-    6  50 - 54                   ////          4
-    7  55 - 59                    ///          3
-    >>>
-    >>> # Class width of 10 and showing individual values
-    >>> result = sta_freq_tally(data, class_width=10, show_values=True)
-    >>> result.table
-         Class                                  Tally  Frequency                                             Values
-    1  20 - 29                                     //          2                                             26, 29
-    2  30 - 39             ///// . ///// . ///// . //         17  38, 32, 37, 38, 38, 38, 33, 34, 36, 37, 33, 39...
-    3  40 - 49   ///// . ///// . ///// . ///// . ////         24  40, 43, 43, 46, 45, 45, 43, 46, 48, 40, 49, 43...
-    4  50 - 59                             ///// . //          7                         54, 56, 52, 56, 52, 59, 52
+         Class                  Tally  Frequency  Cum. Frequency
+    1  25 - 29                     //          2               2
+    2  30 - 34              ///// . /          6               8
+    3  35 - 39      ///// . ///// . /         11              19
+    4  40 - 44   ///// . ///// . ////         14              33
+    5  45 - 49        ///// . ///// .         10              43
+    6  50 - 54                   ////          4              47
+    7  55 - 59                    ///          3              50
+    
+    >>> result.stats.mean
+    41.92
+    
+    >>> result.stats.std
+    7.143780511745863
+    
+    >>> result.cumfreq
+    array([ 2,  8, 19, 33, 43, 47, 50], dtype=int64)
     """
     data_arr = asarray(data, dtype=float64)
     

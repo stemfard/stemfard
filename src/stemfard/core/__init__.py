@@ -1,4 +1,4 @@
-from .utils import FrequencyTallyWarning
+from .utils_classes import FrequencyTallyWarning
 
 __all__ = [
     "FrequencyTallyWarning"
