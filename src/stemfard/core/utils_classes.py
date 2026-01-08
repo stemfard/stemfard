@@ -32,13 +32,9 @@ class ResultDict(dict):
         try:
             return self[name]
         except KeyError:
-            if name in STATS:
-                raise AttributeError(
-                    f"'ResultDict' object has no attribute {name!r}, "
-                    f"use obj.stats.{name} instead"
-                )
+            msg = f", use obj.stats.{name} instead" if name in STATS else ""
             raise AttributeError(
-                f"'ResultDict' object has no attribute {name!r}"
+                f"'ResultDict' object has no attribute {name!r}{msg}"
             ) from None
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -53,13 +49,9 @@ class ResultDict(dict):
         try:
             del self[name]
         except KeyError:
-            if name in STATS:
-                raise AttributeError(
-                    f"'ResultDict' object has no attribute {name!r}, "
-                    f"use del obj.stats.{name} instead"
-                )
+            msg = f", use obj.stats.{name} instead" if name in STATS else ""
             raise AttributeError(
-                f"'ResultDict' object has no attribute {name!r}"
+                f"'ResultDict' object has no attribute {name!r}{msg}"
             ) from None
 
     def __repr__(self) -> str:
