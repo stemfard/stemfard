@@ -1,53 +1,37 @@
 import copy
-from dataclasses import field
-from typing import Any, Iterator
+from typing import Any
 
-class FunctionResult:
+
+class ResultDict(dict):
     """
-    Generic result container for any function.
+    Container object for function results.
 
-    - Attributes are created dynamically based on what the function returns.
-    - Supports dot access: res.attr
-    - Provides .keys(), .items(), .values(), and a summary method.
+    It is a dictionary subclass that supports both key-based and attribute-
+    based access to stored values.
+
+    Attributes may be added dynamically and are stored directly in the
+    underlying dictionary.
     """
-    
-    _data: dict[str, Any] = field(default_factory=dict, init=False, repr=False)
 
-    def __init__(self, **kwargs: Any):
-        # Initialize the _data field
-        object.__setattr__(self, '_data', {})
-        
-        # Add all items as attributes (stored in _data dict)
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-            
     def to_dict(self) -> dict[str, Any]:
-        """Return all values as dictionary"""
-        # Return a copy to prevent modification
-        return copy.deepcopy(self._data)
+        """Return a deep copy of the stored results."""
+        return copy.deepcopy(dict(self))
 
-    def keys(self) -> Iterator[str]:
-        """Return all attribute names."""
-        return iter(self._data.keys())
+    def __getattr__(self, name: str) -> Any:
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name) from None
 
-    def values(self) -> Iterator[Any]:
-        """Return all attribute values."""
-        return iter(self._data.values())
+    def __setattr__(self, name: str, value: Any) -> None:
+        self[name] = value
 
-    def items(self) -> Iterator[tuple[str, Any]]:
-        """Return all attribute-name / value pairs."""
-        return iter(self._data.items())
-
-    def summary(self) -> None:
-        """Pretty-print all stored attributes."""
-        for key, value in self.items():
-            print(f"{key}: {value}")
+    def __delattr__(self, name: str) -> None:
+        try:
+            del self[name]
+        except KeyError:
+            raise AttributeError(name) from None
 
     def __repr__(self) -> str:
-        """Print the attributes"""
-        attrs = ", ".join(self._data.keys())
-        return f"FunctionResult({attrs})"
-
-    def __len__(self) -> int:
-        """Return number of attributes."""
-        return len(self._data)
+        keys = ", ".join(sorted(self))
+        return f"{self.__class__.__name__}({keys})"

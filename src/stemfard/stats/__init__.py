@@ -1,4 +1,11 @@
 from .eda import (
-    FrequencyTallyWarning, 
-    sta_freq_tally, sta_eda_grouped, sta_eda_ungrouped, sta_correlation
+    sta_freq_tally, sta_eda_grouped_mean, sta_eda_grouped_sd,
+    sta_eda_grouped_percentiles
 )
+
+__all__ = [
+    "sta_freq_tally",
+    "sta_eda_grouped_mean",
+    "sta_eda_grouped_sd",
+    "sta_eda_grouped_percentiles"
+]

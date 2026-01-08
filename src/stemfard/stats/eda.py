@@ -1,15 +1,19 @@
 from enum import Enum
+import statistics
+import warnings
 
-from numpy import float64, nan
+from numpy import arange, asarray, bincount, ceil, char, clip, cumsum, digitize, empty, float64, floor, mod, nan, ndarray
 from numpy.typing import NDArray
 from pandas import DataFrame, concat
+from stemcore import numeric_format, str_data_join_contd
 from verifyparams import (
     verify_all_integers, verify_int_or_float, verify_len_equal,
     verify_membership
 )
 
 from stemfard.core.convert import to_numeric
-from stemfard.core.results import FunctionResult
+from stemfard.core.results import ResultDict
+from stemfard.core.utils import FrequencyTallyWarning
 
 
 class StatisticType(Enum):
@@ -41,7 +45,7 @@ class GroupedStatisticsCalculator:
         statistic: StatisticType = StatisticType.MEAN,
         decimals: int = 4,
         **kwargs
-    ) -> FunctionResult:
+    ) -> ResultDict:
         """
         Calculate grouped statistics with comprehensive error handling.
         
@@ -54,7 +58,7 @@ class GroupedStatisticsCalculator:
             **kwargs: Additional parameters specific to each statistic
             
         Returns:
-            FunctionResult containing answer, table, and metadata
+            ResultDict containing answer, table, and metadata
         """
         lower_limits, upper_limits, freq, class_width, statistic = self._validate_common_params(
             lower_limits=lower_limits,
@@ -211,7 +215,7 @@ class GroupedStatisticsCalculator:
         assumed_mean: int | float | None,
         assumed_mean_formula: AssumedMeanFormulaType,
         decimals: int
-    ) -> FunctionResult:
+    ) -> ResultDict:
         """Calculate mean for grouped data."""
         
         if assumed_mean is not None:
@@ -253,7 +257,7 @@ class GroupedStatisticsCalculator:
             })
             dframe = concat([dframe, total_row], ignore_index=True)
             
-            return FunctionResult(
+            return ResultDict(
                 answer=round(mean_value, decimals),
                 table=dframe,
                 metadata={
@@ -285,7 +289,7 @@ class GroupedStatisticsCalculator:
             })
             dframe = concat([dframe, total_row], ignore_index=True)
             
-            return FunctionResult(
+            return ResultDict(
                 answer=round(mean_value, decimals),
                 table=dframe,
                 metadata={
@@ -308,7 +312,7 @@ class GroupedStatisticsCalculator:
         assumed_mean: int | float | None,
         assumed_mean_formula: AssumedMeanFormulaType,
         decimals: int = 4
-    ) -> FunctionResult:
+    ) -> ResultDict:
         """Calculate variance for grouped data."""
         
         if assumed_mean is not None:
@@ -350,7 +354,7 @@ class GroupedStatisticsCalculator:
             })
             dframe = concat([dframe, total_row], ignore_index=True)
             
-            return FunctionResult(
+            return ResultDict(
                 answer=round(mean_value, decimals),
                 table=dframe,
                 metadata={
@@ -382,7 +386,7 @@ class GroupedStatisticsCalculator:
             })
             dframe = concat([dframe, total_row], ignore_index=True)
             
-            return FunctionResult(
+            return ResultDict(
                 answer=round(mean_value, decimals),
                 table=dframe,
                 metadata={
@@ -402,7 +406,7 @@ class GroupedStatisticsCalculator:
         class_labels: list[str],
         decimals: int,
         **kwargs
-    ) -> FunctionResult:
+    ) -> ResultDict:
         """Calculate percentiles for grouped data."""
         pass
 
@@ -511,4 +515,248 @@ def sta_eda_grouped_percentiles(
     return result
 
 
+def sta_freq_tally(
+    data: list[int | float] | ndarray,
+    class_width: int | float,
+    start_from: int | float | None  = None,
+    show_values: bool = False,
+    include_cumfreq: bool = False,
+    decimals: int = 4
+) -> DataFrame:
+    """
+    Compute a statistical frequency tally of a dataset.
+
+    Generates class intervals, counts frequency of observations in each 
+    class, and optionally displays individual values or tally marks.
+
+    Parameters
+    ----------
+    data : array-like of int or float
+        Input data. Must be one-dimensional.
+    class_width : int or float
+        Width of each class interval.
+    start_from : int or float, optional
+        Lower bound of the first class. If None, the first class starts at
+        the floor of the minimum data value rounded to the nearest multiple
+        of `class_width`.
+    show_values : bool, default False
+        If True, display the individual values in each class (only if
+        the maximum frequency is 50 or less for readability).
+    include_cumfreq : bool, default False
+        If True, add a cumulative frequency column.
+    decimals : int, default 4
+        Number of decimal places for formatting class limits and values.
+
+    Returns
+    -------
+    result : ResultDict
+        A structured object containing:
+        - `table` : pandas.DataFrame with columns `Class`, `Tally`, `Frequency`
+                     (and `Values` if `show_values` is True)
+        - `class_limits` : str, placeholder for future use
+        - `freq` : ndarray, frequencies per class
+        - `total_freq` : int, sum of all frequencies
+        - `col_names` : Index of column names in the table
+
+    Raises
+    ------
+    ValueError
+        If `data` is not one-dimensional.
+    TypeError
+        If input cannot be converted to numeric values.
+
+    Warnings
+    --------
+    FrequencyTallyWarning
+        - If `start_from` excludes values below it, a warning lists the excluded values.
+        - If maximum frequency exceeds 50, the `Tally` and `Values` columns are omitted
+          for readability.
+
+    Notes
+    -----
+    - Class intervals are closed on the left and open on the right.
+    - Tally marks are grouped in fives for quick visual inspection.
+    - Values are formatted to remove trailing zeros and decimal points when unnecessary.
+    - This function returns a `ResultDict` object, which allows dot-access
+      to table data and metadata.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import stemfard as stm
+    >>> 
+    >>> data = [
+        38, 40, 54, 43, 43, 56, 46, 32, 37, 38, 52, 45, 45, 43, 38, 56, 46,
+        26, 48, 38, 33, 40, 34, 36, 37, 29, 49, 43, 33, 52, 45, 40, 49, 44,
+        41, 42, 46, 42, 40, 39, 36, 40, 32, 59, 52, 33, 39, 38, 48, 41
+    ]
+    >>> result = sta_freq_tally(data, class_width=5)
+    >>> result.table
+         Class                  Tally  Frequency
+    1  25 - 29                     //          2
+    2  30 - 34              ///// . /          6
+    3  35 - 39      ///// . ///// . /         11
+    4  40 - 44   ///// . ///// . ////         14
+    5  45 - 49        ///// . ///// .         10
+    6  50 - 54                   ////          4
+    7  55 - 59                    ///          3
+    >>>
+    >>> # Class width of 10 and showing individual values
+    >>> result = sta_freq_tally(data, class_width=10, show_values=True)
+    >>> result.table
+         Class                                  Tally  Frequency                                             Values
+    1  20 - 29                                     //          2                                             26, 29
+    2  30 - 39             ///// . ///// . ///// . //         17  38, 32, 37, 38, 38, 38, 33, 34, 36, 37, 33, 39...
+    3  40 - 49   ///// . ///// . ///// . ///// . ////         24  40, 43, 43, 46, 45, 45, 43, 46, 48, 40, 49, 43...
+    4  50 - 59                             ///// . //          7                         54, 56, 52, 56, 52, 59, 52
+    """
+    data_arr = asarray(data, dtype=float64)
     
+    if data_arr.ndim != 1:
+        raise ValueError("Data must be 1-dimensional")
+    
+    # Vectorized calculations
+    min_val = data_arr.min()
+    max_val = data_arr.max()
+    
+    if start_from is None:
+        start_val = floor(min_val / class_width) * class_width
+    else:
+        start_val = start_from
+        
+    below_mask = data_arr < start_val
+    excluded_values = data_arr[below_mask]
+    
+    if len(excluded_values) > 0:
+        data_arr = data_arr[data_arr >= start_val]
+        excluded_values = numeric_format(excluded_values)
+        excluded_str = str_data_join_contd(excluded_values)
+        
+        warnings.warn(
+            f"{len(excluded_values)} value(s) below 'start_from' ({start_val}) "
+            f"were excluded from the tally: {excluded_str}",
+            category=FrequencyTallyWarning,
+            stacklevel=2
+        )
+
+    end_val = ceil(max_val / class_width) * class_width + class_width
+    bins = arange(start_val, end_val + class_width, class_width)
+    
+    # Vectorized bin assignment
+    bin_indices = digitize(data_arr, bins, right=False) - 1
+    bin_indices = clip(bin_indices, 0, len(bins) - 2)
+    
+    # Count frequencies using bincount
+    frequencies = bincount(bin_indices, minlength=len(bins) - 1)
+    
+    # Generate labels
+    left_edges = bins[:-1]
+    right_edges = bins[1:] - 1
+    
+    labels = []
+    for left, right in zip(left_edges, right_edges):
+        if left.is_integer() and right.is_integer():
+            labels.append(f"{int(left)} - {int(right)}")
+        else:
+            # Clean up trailing zeros
+            left_str = f"{left:.{decimals}f}".rstrip('0').rstrip('.')
+            right_str = f"{right:.{decimals}f}".rstrip('0').rstrip('.')
+            labels.append(f"{left_str} - {right_str}")
+    
+    # Fast tally marks
+    def create_tally_fast(count: int) -> str:
+        if count == 0:
+            return ""
+        
+        groups = count // 5
+        remainder = count % 5
+        
+        if groups > 0 and remainder > 0:
+            return " ///// ." * groups + " " + "/" * remainder
+        elif groups > 0:
+            return (" ///// ." * groups).strip()
+        else:
+            return "/" * remainder
+    
+    tallies = [create_tally_fast(int(freq)) for freq in frequencies]
+    
+    # Build result
+    result_dict = {
+        "Class": labels,
+        "Tally": tallies,
+        "Frequency": frequencies
+    }
+    
+    if show_values and max(frequencies) <= 50:
+        values_by_bin = []
+        for i in range(len(frequencies)):
+            mask = bin_indices == i
+            bin_values = data_arr[mask]
+            
+            if len(bin_values) > 0:
+                # Format efficiently
+                int_mask = mod(bin_values, 1) == 0
+                formatted_vals = empty(len(bin_values), dtype=object)
+                
+                # Handle integers
+                int_vals = bin_values[int_mask]
+                if len(int_vals) > 0:
+                    formatted_vals[int_mask] = int_vals.astype(int).astype(str)
+                
+                # Handle floats
+                float_mask = ~int_mask
+                float_vals = bin_values[float_mask]
+                if len(float_vals) > 0:
+                    formatted = char.mod(f"%.{decimals}f", float_vals)
+                    formatted = char.rstrip(formatted, '0')
+                    formatted = char.rstrip(formatted, '.')
+                    formatted_vals[float_mask] = formatted
+                
+                values_by_bin.append(", ".join(formatted_vals))
+            else:
+                values_by_bin.append("")
+        
+        result_dict["Values"] = values_by_bin
+        
+    dframe = DataFrame(result_dict)
+    
+    if max(frequencies) > 50:
+        warnings.warn(
+            "Maximum frequency exceeds 50, 'Tally' and 'Values' columns were "
+            "omitted for readability.",
+            category=FrequencyTallyWarning,
+            stacklevel=2
+        )
+        dframe = dframe[["Class", "Frequency"]]
+    
+    if dframe["Frequency"].iat[-1] == 0:
+        dframe = dframe.iloc[:-1]
+    
+    dframe.index = arange(1, len(dframe) + 1)
+    freq_col = dframe["Frequency"]
+    freq_cumsum = cumsum(freq_col)
+    
+    if include_cumfreq:
+        dframe["Cum. Frequency"] = freq_cumsum
+    
+    data = asarray(data, dtype=float)
+    nrows, ncols = dframe.shape
+    
+    return ResultDict(
+        table=dframe,
+        class_limits=dframe["Class"].values,
+        freq=freq_col.values,
+        cumfreq=freq_cumsum.values,
+        col_names=dframe.columns,
+        stats = ResultDict(
+            nrows=nrows,
+            ncols=ncols,
+            n=freq_col.sum(),
+            min=data.min(),
+            max=data.max(),
+            range=data.max() - data.min(),
+            mean=data.mean(),
+            var=data.var(),
+            std=data.std()
+        )
+    )

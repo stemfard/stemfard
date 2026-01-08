@@ -11,8 +11,8 @@ from verifyparams import verify_decimals, verify_int_or_float, verify_membership
 from stemfard.core._strings import str_data_join_contd
 from stemfard.core.convert import to_numeric
 from stemfard.core.decimals import numeric_format
-from stemfard.core.results import FunctionResult
-from stemfard.stats.utils import FrequencyTallyWarning
+from stemfard.core.results import ResultDict
+from stemfard.core.utils import FrequencyTallyWarning
 
 
 def sta_freq_tally(
@@ -221,7 +221,7 @@ def sta_eda_grouped(
         answer = sum(midpoint * freq) / sum(freq)
         dframe = DataFrame(data=data_dct).round(decimals)
         
-        return FunctionResult(table=dframe, answer=round(answer, decimals))
+        return ResultDict(table=dframe, answer=round(answer, decimals))
     
     elif statistic == "variance":
         pass
