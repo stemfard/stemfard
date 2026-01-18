@@ -1,284 +1,377 @@
-from enum import Enum
+from typing import Any, Literal
 import warnings
 
 from numpy import (
-    arange, asarray, bincount, ceil, char, clip, cumsum, digitize, empty,
-    float64, floor, mod, nan, ndarray
+    arange, around, asarray, bincount, ceil, char, clip, cumsum, digitize,
+    empty, float64, floor, mod, nan, ndarray
 )
 from numpy.typing import NDArray
 from pandas import DataFrame, concat
-from stemcore import numeric_format, str_data_join_contd
 from verifyparams import (
-    verify_all_integers, verify_int_or_float, verify_len_equal,
-    verify_membership
+    verify_all_integers, verify_decimals, verify_int_or_float,
+    verify_len_equal, verify_membership
 )
+from stemcore import arr_to_numeric, numeric_format, str_data_join_contd
 
-from stemfard.core.convert import to_numeric
 from stemfard.core.utils_classes import FrequencyTallyWarning, ResultDict
 
 
-class StatisticType(Enum):
-    MEAN = "mean"
-    STANDARD_DEVIATION = "sd"
-    PERCENTILES = "percentiles"
+_ALLOWED_FORMULAS = ["x-a", "x/w-a", "(x-a)/w"]
+_ALLOWED_STATISTICS = ["mean", "std", "percentiles"]
 
 
-class AssumedMeanFormulaType(Enum):
-    X_MINUS_A = "x-a"
-    X_OVER_W_MINUS_A = "x/w-a"
-    X_MINUS_A_OVER_W = "(x-a)/w"
+FORMULAS_ARITHMETIC_MEAN = {
+    "values_only": (
+        f"x_{{1}}, \\: x_{{2}}, \\: x_{{3}}, \\: \\cdots, \\: x_{{n}}"
+    ),
+    "values_and_freq": (
+        f"\\begin{{array}}{{|l|c|c|c|c|c|}} \\hline "
+        f"\\mathrm{{Data}} & x_{{1}} & x_{{2}} & x_{{3}} & \\cdots & x_{{n}} \\\\ \\hline "
+        f"\\mathrm{{Frequency}} & f_{{1}} & f_{{2}} & f_{{3}} & \\cdots & f_{{n}} \\\\ \\hline "
+        f"\\end{{array}}"
+    ),
+    "arithmetic_mean": (
+        f"\\displaystyle \\bar{{x}} = \\frac{{ \\sum x_{{i}}}}{{n}}"
+    ),
+    "arithmetic_mean_with_assumed_mean": (
+        f"\\displaystyle \\bar{{x}} = A + \\frac{{ \\sum (x_{{i}} - A)}}{{n}}"
+    ),
+    "arithmetic_mean_with_freq": (
+        f"\\displaystyle \\bar{{x}} "
+        f"= \\frac{{ \\sum\\mathrm{{fx}}}}{{ \\sum\\mathrm{{f}}}}"
+    ),
+    "arithmetic_mean_with_freq_and_assumed_mean": (
+        f"\\displaystyle \\bar{{x}} "
+        f"= A + \\frac{{ \\sum\\mathrm{{ft}}}}{{ \\sum\\mathrm{{f}}}}"
+    )
+}
+
+
+FORMULAS_ASSUMED_MEAN_TYPES: Literal["x-a", "x/w-a", "(x-a)/w"] = {
+    "x-a": [
+        f"\\( \\displaystyle \\quad \\bar{{x}} "
+        f"= A + \\frac{{\\sum \\mathrm{{ft}}}}{{\\sum \\mathrm{{f}}}} \\)",
+        "Where \\( f \\) is the frequency and \\( t = x - A \\)."
+    ],
+    "x/w-a": [
+        f"\\( \\displaystyle \\quad \\bar{{x}} "
+        f"= \\left(A^{{*}} + \\frac{{\\sum \\mathrm{{ft}}}}{{\\sum \\mathrm{{f}}}} \\right) "
+        "\\times w \\)",
+        f"Where \\( A^{{*}} \\) is the new assumed mean, \\( f \\) is the "
+        "frequency, \\( t = x - A\\) and \\( w \\) is the "
+        f"\\( \\textbf{{class width}} \\)CLASS_WIDTH"
+    ],
+    "(x-a)/w": [
+        f"\\( \\displaystyle \\quad \\bar{{x}} "
+        f"= A + \\frac{{\\sum \\mathrm{{ft}}}}{{\\sum \\mathrm{{f}}}} \\times w \\)",
+        "Where \\( f \\) is the frequency, \\( t = x - A\\) and \\( w \\) "
+        f"is the \\( \\textbf{{class width}} \\)CLASS_WIDTH"
+    ]
+}
 
 
 class GroupedStatisticsCalculator:
 
-    def __init__(self):
+    def __init__(
+        self,
+        lower_limits: list[int | float] | NDArray[Any],
+        upper_limits: list[int | float] | NDArray[Any],
+        freq: list[int | float] | NDArray[Any],
+        statistic: Literal["mean", "std", "percentiles"],
+        decimals: int = 4,
+        **kwargs
+    ) -> None:
         """
         Initialize the calculator.
         """
+        self.params = {}
+        self.params_parsed = {}
         
-    
-    def compute(
-        self,
-        lower_limits: list[int | float] | NDArray[float64],
-        upper_limits: list[int | float] | NDArray[float64],
-        freq: list[int | float] | NDArray[float64],
-        class_width: int | float,
-        statistic: StatisticType = StatisticType.MEAN,
-        decimals: int = 4,
-        **kwargs
-    ) -> ResultDict:
-        """
-        Calculate grouped statistics with comprehensive error handling.
+        self.lower_limits = lower_limits
+        self.upper_limits = upper_limits
+        self.freq = freq
+        self.statistic = statistic
+        self.decimals = decimals
+        self.kwargs = kwargs
         
-        Args:
-            lower_limits: Lower class limits/boundaries
-            upper_limits: Upper class limits/boundaries
-            frequencies: Class frequencies
-            statistic: Type of statistic to calculate
-            decimals: Number of decimal places for rounding
-            **kwargs: Additional parameters specific to each statistic
-            
-        Returns:
-            ResultDict containing answer, table, and metadata
-        """
-        lower_limits, upper_limits, freq, class_width, statistic = self._validate_common_params(
-            lower_limits=lower_limits,
-            upper_limits=upper_limits,
-            freq=freq,
-            class_width=class_width,
-            statistic=statistic
-        )
+        # initialization
+        self.class_labels = ""
         
-        class_labels = self._generate_class_labels(
-            lower_limits=lower_limits,
-            upper_limits=upper_limits,
-            decimals=decimals
-        )
+        self._validate_common_params()
         
-        # * 0.5 for better numerical accurace than /2 (i.e. division by 2)
-        midpoints = lower_limits * 0.5 + upper_limits * 0.5
-        
-        params_dct = {
-            "class_labels": class_labels,
-            "lower_limits": lower_limits,
-            "upper_limits": upper_limits,
-            "midpoints": midpoints,
-            "freq": freq,
-            "decimals": decimals
-        }
-        
-        if statistic in ["mean", "sd"]:
-            params_dct.update(
-                {
-                "assumed_mean": kwargs.get("assumed_mean"),
-                "assumed_mean_formula": (
-                    kwargs.get("assumed_mean_formula", "(x-a)/w")
-                )
+        self.params.update(
+            {
+                "lower_limits": lower_limits,
+                "upper_limits": upper_limits,
+                "freq": freq,
+                "statistic": statistic,
+                "decimals": decimals
             }
-            )
-        else:
-            params_dct.update(
-                {
-                    "percentiles": kwargs.get("percentiles"),
-                }
-            )
-            cumfreq_curve = kwargs.get("cumfreq_curve")
-            
-            if cumfreq_curve:
-                params_dct = {
-                    "x_values": kwargs.get("x_values"),
-                    "fig_width": kwargs.get("fig_width"),
-                    "fig_height": kwargs.get("fig_height"),
-                    "line_color": kwargs.get("line_color"),
-                    "xaxis_orientation": kwargs.get("xaxis_orientation"),
-                    "x_title": kwargs.get("x_title")
-                }
+        )
         
-        # Perform calculations based on statistic type
-        
-        if statistic == "mean":
-            return self._calculate_mean(**params_dct)
-        elif statistic == "sd":
-            return self._calculate_standard_deviation(**params_dct)
-        elif statistic == "percentiles":
-            return self._calculate_percentiles(**params_dct)
+        self.params_parsed.update(
+            {
+                "lower_limits": self.lower_limits,
+                "upper_limits": self.upper_limits,
+                "freq": self.freq,
+                "statistic": self.statistic,
+                "decimals": self.decimals
+            }
+        )
     
     
-    def _validate_common_params(
-        self,
-        lower_limits: list[int | float] | NDArray[float64],
-        upper_limits: list[int | float] | NDArray[float64],
-        freq: list[int | float] | NDArray[float64],
-        class_width: int | float,
-        statistic: StatisticType
-    ) -> tuple[NDArray[float64], NDArray[float64], NDArray[float64]]:
-        """Validate and convert input data to numpy arrays."""
-        lower_limits = to_numeric(data=lower_limits, param_name="lower_limits")
-        upper_limits = to_numeric(data=upper_limits, param_name="upper_limits")
-        freq = to_numeric(freq, dtype=None)
-        verify_all_integers(value=freq, param_name="freq")
+    def _validate_common_params(self) -> None:
+        
+        self.lower_limits = arr_to_numeric(
+            data=self.lower_limits, param_name="lower_limits"
+        )
+        self.upper_limits = arr_to_numeric(
+            data=self.upper_limits, param_name="upper_limits"
+        )
+        self.freq = arr_to_numeric(data=self.freq, dtype=None)
+        
+        verify_all_integers(value=self.freq, param_name="freq")
+        
+        # convert to integers after verification above
+        self.freq = asarray(self.freq, dtype=int)
+        
         verify_len_equal(
-            lower_limits,
-            upper_limits,
-            freq,
+            self.lower_limits,
+            self.upper_limits,
+            self.freq,
             param_names=["lower_limits", "upper_limits", "freq"]
         )
-        verify_int_or_float(value=class_width, param_name="class_width")
-        statistic = statistic.value
+        
         verify_membership(
-            user_input=statistic,
-            valid_items=["mean", "variance", "percentiles"],
+            user_input=self.statistic,
+            valid_items=_ALLOWED_STATISTICS,
             param_name="statistic"
         )
         
-        return lower_limits, upper_limits, freq, class_width, statistic
-    
-    
-    def _generate_class_labels(
-        self, 
-        lower_limits: NDArray[float64], 
-        upper_limits: NDArray[float64],
-        decimals: int = 4
-    ) -> list[str]:
-        """Generate formatted class labels."""
-        return [
-            f"{round(lower, decimals)} - {round(upper, decimals)}"
-            for lower, upper in zip(lower_limits, upper_limits)
+        self.decimals = verify_decimals(
+            value=self.decimals, param_name="decimals"
+        )
+        
+        self.class_labels = [
+            f"{round(numeric_format(lower), self.decimals)} - "
+            f"{round(numeric_format(upper), self.decimals)}"
+            for lower, upper in zip(self.lower_limits, self.upper_limits)
         ]
+        
+        self.class_width = self.upper_limits[0] - self.lower_limits[0] + 1
+        self.midpoints = self.lower_limits * 0.5 + self.upper_limits * 0.5
     
     
-    def _validate_assumed_mean(
-        self, 
-        assumed_mean: int | float, 
-        assumed_mean_formula: AssumedMeanFormulaType = None
+    def _validate_params_means(
+        self,
+        assumed_mean: int | float | None,
+        assumed_mean_formula: Literal["mean", "std", "percentiles"]
     ) -> None:
         """Validate assumed mean parameters."""
-        verify_int_or_float(value=assumed_mean, param_name="assumed_mean")
+        self.assumed_mean = verify_int_or_float(
+            value=assumed_mean,
+            allow_none=True,
+            param_name="assumed_mean"
+        )
         
-        verify_membership(
+        self.assumed_mean_formula = verify_membership(
             user_input=assumed_mean_formula,
-            valid_items=["x-a", "x/w-a", "(x-a)/w"],
+            valid_items=_ALLOWED_FORMULAS,
             param_name="assumed_mean_formula"
+        )
+
+        self.params.update(
+            {
+                "assumed_mean": assumed_mean,
+                "assumed_mean_formula": assumed_mean_formula
+            }
+        )
+        self.params_parsed.update(
+            {
+                "assumed_mean": self.assumed_mean,
+                "assumed_mean_formula": self.assumed_mean_formula
+            }
         )
     
     
-    def _apply_assumed_mean_formula(
+    def _validate_params_percentiles(
         self,
-        midpoints: NDArray[float64],
-        class_width: int | float,
-        assumed_mean: int | float,
-        assumed_mean_formula: AssumedMeanFormulaType,
-        decimals: int = 4
-    ) -> NDArray[float64]:
+        percentiles,
+        cumfreq_curve,
+        x_values,
+        **plot_kwargs
+    ) -> None:
+        
+        self.percentiles = percentiles
+        self.cumfreq_curve = cumfreq_curve
+        self.x_values = x_values
+        
+        perc_dct = {"percentiles": percentiles}
+        self.params.update(perc_dct)
+        self.params_parsed.update(perc_dct)
+        
+        if cumfreq_curve:
+            params_dct = {
+                "x_values": x_values,
+                "fig_width": plot_kwargs.get("fig_width", 6),
+                "fig_height": plot_kwargs.get("fig_height", 4),
+                "line_color": plot_kwargs.get("line_color", "blue"),
+                "xaxis_orientation": plot_kwargs.get("xaxis_orientation", 0),
+                "x_title": plot_kwargs.get("x_title", "Data")
+            }
+            self.params.update(params_dct)
+            self.params_parsed.update(params_dct)
+    
+    
+    def _apply_assumed_mean_formula(self) -> tuple[NDArray[float64], str]:
         """Apply assumed mean formula to midpoints."""
-        if assumed_mean_formula == "x-a":
-            t_values = midpoints - assumed_mean
-            t_name = f"t = x - {round(assumed_mean, decimals)}"
+        if self.assumed_mean_formula == "x-a":
+            t_values = self.midpoints - self.assumed_mean
+            t_name = f"t = x - {round(self.assumed_mean, self.decimals)}"
             return t_values, t_name
-        elif assumed_mean_formula == "x/w-a":
-            t_values = midpoints / class_width - assumed_mean
-            t_name = f"t = x / {round(class_width, decimals)} - {round(assumed_mean, decimals)}"
+        elif self.assumed_mean_formula == "x/w-a":
+            t_values = self.midpoints / self.class_width - self.assumed_mean
+            t_name = (
+                f"t = x / {round(self.class_width, self.decimals)} - "
+                f"{round(self.assumed_mean, self.decimals)}"
+            )
             return t_values, t_name
-        elif assumed_mean_formula == "(x-a)/w":
-            t_values = (midpoints - assumed_mean) / class_width
-            t_name = f"t = (x - {round(assumed_mean, decimals)}) / {round(class_width, decimals)}"
+        elif self.assumed_mean_formula == "(x-a)/w":
+            t_values = (self.midpoints - self.assumed_mean) / self.class_width
+            t_name = (
+                f"t = (x - {round(self.assumed_mean, self.decimals)}) / "
+                f"{round(self.class_width, self.decimals)}"
+            )
             return t_values, t_name
     
     
-    def _calculate_mean(
-        self,
-        class_labels: list[str],
-        lower_limits: NDArray[float64],
-        upper_limits: NDArray[float64],
-        class_width: int | float,
-        midpoints: NDArray[float64],
-        freq: NDArray[float64],
-        assumed_mean: int | float | None,
-        assumed_mean_formula: AssumedMeanFormulaType,
-        decimals: int
-    ) -> ResultDict:
+    def _table_grouped_qtn(self) -> tuple[str, str, str, str]:
+    
+        df_series = {
+            "Class": self.class_labels,
+            "Frequency": around(self.freq, self.decimals)
+        }
+        
+        table_qtn_df = DataFrame(data=df_series)
+        table_qtn_df_rowise = table_qtn_df.T
+        table_qtn_df_rowise.index = ["Class", "Frequency"]
+        table_qtn_df_rowise.columns = range(1, table_qtn_df_rowise.shape[1] + 1)
+        
+        # ComputedDataModel for `data`
+        obj_values_data = table_qtn_df.values.tolist()
+        latex_data = dframe_to_mathjax_array(
+            df=table_qtn_df,
+            include_index=False,
+            outer_border=True,
+            inner_vlines=True
+        )
+
+        latex_data_rowise = dframe_to_mathjax_array(
+            df=table_qtn_df_rowise,
+            include_index=True,
+            outer_border=True,
+            inner_vlines=True
+        )
+        latex_data_rowise = latex_data_rowise\
+            .replace("l|", "c|")\
+            .replace("c|", "l|", 1)\
+            .replace(f"\\mathrm{{Frequency}}", f"\\hline\\mathrm{{Frequency}}")\
+            .replace("  & 1", "\\qquad i  & 1", 1)
+        
+        csv_data = result_to_csv(obj=table_qtn_df)
+        
+        return obj_values_data, latex_data, csv_data, latex_data_rowise
+        
+        
+    def _prepare_out_dframe() -> DataFrame:
+        
+        NotImplemented
+        
+    
+    def _prepare_out_dframe_latex() -> DataFrame:
+        
+        NotImplemented
+        
+        
+    def _prepare_out_dframe_csv() -> DataFrame:
+        
+        NotImplemented
+    
+    
+    def _calculate_mean(self, assumed_mean, assumed_mean_formula) -> ResultDict:
         """Calculate mean for grouped data."""
+        self.assumed_mean = assumed_mean
+        self.assumed_mean_formula = assumed_mean_formula
         
-        if assumed_mean is not None:
-            if assumed_mean == -999:
-                assumed_mean = 0.5 * lower_limits[0] + 0.5 * upper_limits[-1]
+        self._validate_params_means(
+            assumed_mean=assumed_mean,
+            assumed_mean_formula=assumed_mean_formula
+        )
+        
+        if self.assumed_mean is not None:
+            if self.assumed_mean == -999:
+                assumed_mean = (
+                    0.5 * self.lower_limits[0] + 0.5 * self.upper_limits[-1]
+                )
             else:
-                assumed_mean = self._validate_assumed_mean(
-                    assumed_mean=assumed_mean,
-                    assumed_mean_formula=assumed_mean_formula
+                self.assumed_mean = self._validate_assumed_mean(
+                    assumed_mean=self.assumed_mean,
+                    assumed_mean_formula=self.assumed_mean_formula
                 )
             
             t_name, t_values = self._apply_assumed_mean_formula(
-                midpoints=midpoints,
-                class_width=class_width,
-                assumed_mean=assumed_mean,
-                assumed_mean_formula=assumed_mean_formula,
-                decimals=decimals
+                midpoints=self.midpoints,
+                class_width=self.class_width,
+                assumed_mean=self.assumed_mean,
+                assumed_mean_formula=self.assumed_mean_formula,
+                decimals=self.decimals
             )
 
-            total_freq = sum(freq)
-            weighted_sum = sum(t_values * freq)
-            mean_value = weighted_sum / total_freq
+            total_freq = sum(self.freq)
+            total_fx_or_ft = sum(t_values * self.freq)
+            mean_value = total_fx_or_ft / total_freq
             
             dframe = DataFrame({
-                "Class": class_labels,
-                "Midpoint (x)": round(midpoints, decimals),
-                t_name: t_values, 
-                "Frequency (f)": freq,
-                "ft": round(midpoints * freq, decimals)
+                "Class": self.class_labels,
+                "Midpoint (x)": self.midpoints,
+                t_name: t_values,
+                "Frequency (f)": self.freq,
+                "ft": self.midpoints * self.freq
             })
             
-            # Add total row
-            total_row = DataFrame({
-                "Class": ["Total"],
-                "Midpoint (x)": [nan],
-                t_name: [nan], 
-                "Frequency (f)": [total_freq],
-                "ft": [round(weighted_sum, decimals)]
-            })
-            dframe = concat([dframe, total_row], ignore_index=True)
+            # dframe = df_add_rows(
+            #     df=dframe,
+            #     rows=[["Total", nan, nan, total_freq, total_fx_or_ft]],
+            #     row_names=["Total"]
+            # )
+            
+            dframe = dframe.fillna("").round(self.decimals)
+            nrows, ncols = dframe.shape
+            mean_float = round(mean_value, self.decimals)
             
             return ResultDict(
-                answer=round(mean_value, decimals),
+                params=self.params,
+                params_parsed=self.params_parsed,
+                answer=mean_float,
                 table=dframe,
-                metadata={
-                    "statistic": "mean",
-                    "assumed_mean": assumed_mean,
-                    "formula": assumed_mean_formula,
-                    "total_frequency": total_freq,
-                    "weighted_sum": weighted_sum,
+                stats={
+                    "nrows": nrows,
+                    "ncols": ncols, 
+                    "mean": mean_float,
+                    "total_freq": total_freq,
+                    "total_ft": total_fx_or_ft,
                 }
             )
         else:
-            total_freq = sum(freq)
-            weighted_sum = sum(midpoints * freq)
-            mean_value = weighted_sum / total_freq
+            total_freq = sum(self.freq)
+            total_fx_or_ft = sum(self.midpoints * self.freq)
+            mean_value = total_fx_or_ft / total_freq
             
             dframe = DataFrame({
-                "Class": class_labels,
-                "Midpoint (x)": round(midpoints, decimals),
-                "Frequency (f)": freq,
-                "fx": round(midpoints * freq, decimals)
+                "Class": self.class_labels,
+                "Midpoint (x)": around(self.midpoints, self.decimals),
+                "Frequency (f)": self.freq,
+                "fx": around(self.midpoints * self.freq, self.decimals)
             })
             
             # Add total row
@@ -286,234 +379,126 @@ class GroupedStatisticsCalculator:
                 "Class": ["Total"],
                 "Midpoint (x)": [nan],
                 "Frequency (f)": [total_freq],
-                "fx": [round(weighted_sum, decimals)]
+                "fx": [round(total_fx_or_ft, self.decimals)]
             })
             dframe = concat([dframe, total_row], ignore_index=True)
+            nrows, ncols = dframe.shape
+            mean_float = round(mean_value, self.decimals)
             
             return ResultDict(
-                answer=round(mean_value, decimals),
+                params=self.params,
+                params_parsed=self.params_parsed,
+                answer=round(mean_value, self.decimals),
                 table=dframe,
-                metadata={
-                    "statistic": "mean",
-                    "assumed_mean": None,
-                    "total_frequency": total_freq,
-                    "weighted_sum": weighted_sum
+                stats={
+                    "nrows": nrows,
+                    "ncols": ncols, 
+                    "mean": mean_float,
+                    "total_freq": total_freq,
+                    "total_fx": total_fx_or_ft,
                 }
             )
             
     
-    def _calculate_standard_deviation(
-        self,
-        class_labels: list[str],
-        lower_limits: NDArray[float64],
-        upper_limits: NDArray[float64],
-        class_width: int | float,
-        midpoints: NDArray[float64],
-        freq: NDArray[float64],
-        assumed_mean: int | float | None,
-        assumed_mean_formula: AssumedMeanFormulaType,
-        decimals: int = 4
-    ) -> ResultDict:
+    def _calculate_mean_steps(self) -> list[str]:
         """Calculate variance for grouped data."""
-        
-        if assumed_mean is not None:
-            if assumed_mean == -999:
-                assumed_mean = 0.5 * lower_limits[0] + 0.5 * upper_limits[-1]
-            else:
-                assumed_mean = self._validate_assumed_mean(
-                    assumed_mean=assumed_mean,
-                    assumed_mean_formula=assumed_mean_formula
-                )
-            
-            t_name, t_values = self._apply_assumed_mean_formula(
-                midpoints=midpoints,
-                class_width=class_width,
-                assumed_mean=assumed_mean,
-                assumed_mean_formula=assumed_mean_formula,
-                decimals=decimals
-            )
-
-            total_freq = sum(freq)
-            weighted_sum = sum(t_values * freq)
-            mean_value = weighted_sum / total_freq
-            
-            dframe = DataFrame({
-                "Class": class_labels,
-                "Midpoint (x)": round(midpoints, decimals),
-                t_name: t_values, 
-                "Frequency (f)": freq,
-                "ft": round(midpoints * freq, decimals)
-            })
-            
-            # Add total row
-            total_row = DataFrame({
-                "Class": ["Total"],
-                "Midpoint (x)": [nan],
-                t_name: [nan], 
-                "Frequency (f)": [total_freq],
-                "ft": [round(weighted_sum, decimals)]
-            })
-            dframe = concat([dframe, total_row], ignore_index=True)
-            
-            return ResultDict(
-                answer=round(mean_value, decimals),
-                table=dframe,
-                metadata={
-                    "statistic": "mean",
-                    "assumed_mean": assumed_mean,
-                    "formula": assumed_mean_formula,
-                    "total_frequency": total_freq,
-                    "weighted_sum": weighted_sum,
-                }
-            )
-        else:
-            total_freq = sum(freq)
-            weighted_sum = sum(midpoints * freq)
-            mean_value = weighted_sum / total_freq
-            
-            dframe = DataFrame({
-                "Class": class_labels,
-                "Midpoint (x)": round(midpoints, decimals),
-                "Frequency (f)": freq,
-                "fx": round(midpoints * freq, decimals)
-            })
-            
-            # Add total row
-            total_row = DataFrame({
-                "Class": ["Total"],
-                "Midpoint (x)": [nan],
-                "Frequency (f)": [total_freq],
-                "fx": [round(weighted_sum, decimals)]
-            })
-            dframe = concat([dframe, total_row], ignore_index=True)
-            
-            return ResultDict(
-                answer=round(mean_value, decimals),
-                table=dframe,
-                metadata={
-                    "statistic": "mean",
-                    "assumed_mean": None,
-                    "total_frequency": total_freq,
-                    "weighted_sum": weighted_sum
-                }
-            )
+        pass
     
     
-    def _calculate_percentiles(
-        self,
-        lower_limits: NDArray[float64],
-        upper_limits: NDArray[float64],
-        frequencies: NDArray[float64],
-        class_labels: list[str],
-        decimals: int,
-        **kwargs
-    ) -> ResultDict:
+    def _calculate_standard_deviation(self) -> ResultDict:
+        """Calculate variance for grouped data."""
+        pass
+    
+    
+    def _calculate_standard_deviation_steps(self) -> list[str]:
+        """Calculate variance for grouped data."""
+        pass
+    
+    
+    def _calculate_percentiles(self) -> ResultDict:
+        """Calculate percentiles for grouped data."""
+        pass
+    
+    
+    def _calculate_percentiles_steps(self) -> list[str]:
         """Calculate percentiles for grouped data."""
         pass
 
-
+    
+    def compute(self, **kwargs) -> ResultDict:
+        """
+        Calculate grouped statistics with comprehensive error handling.
+        """
+        assumed_mean = kwargs.get("assumed_mean")
+        assumed_mean_formula = kwargs.get("assumed_mean_formula", "(x-a)/w")
+        
+        if self.statistic == "mean":
+            return self._calculate_mean(
+                assumed_mean=assumed_mean,
+                assumed_mean_formula=assumed_mean_formula
+            )
+        elif self.statistic == "std":
+            return self._calculate_standard_deviation()
+        elif self.statistic == "percentiles":
+            return self._calculate_percentiles()
+    
+    
 def sta_eda_grouped_mean(
     lower_limits: list[int | float] | NDArray[float64],
     upper_limits: list[int | float] | NDArray[float64],
     freq: list[int | float] | NDArray[float64],
-    class_width: int | float,
     assumed_mean: int | float | None,
-    assumed_mean_formula: AssumedMeanFormulaType = AssumedMeanFormulaType.X_MINUS_A_OVER_W,
+    assumed_mean_formula: Literal["mean", "std", "percentiles"] = "mean",
     decimals: int = 4,
 ) -> float:
-    """
-    Convenience function to compute grouped mean.
-    
-    Args:
-        lc_limits: Lower class limits
-        uc_limits: Upper class limits
-        freq: Frequencies
-        decimals: Number of decimal places
-        raise_on_error: Whether to raise exceptions or return NaN
-        
-    Returns:
-        Calculated mean
-    """
-    compute_class = GroupedStatisticsCalculator()
-    result = compute_class.compute(
+    "Compute mean for grouped data"
+    compute_class = GroupedStatisticsCalculator(
         lower_limits=lower_limits,
         upper_limits=upper_limits,
         freq=freq,
-        class_width=class_width,
+        statistic="mean",
         assumed_mean=assumed_mean,
         assumed_mean_formula=assumed_mean_formula,
         decimals=decimals
     )
-    
-    return result
+    return compute_class.compute()
 
 
-def sta_eda_grouped_sd(
+def sta_eda_grouped_mean_steps(
     lower_limits: list[int | float] | NDArray[float64],
     upper_limits: list[int | float] | NDArray[float64],
     freq: list[int | float] | NDArray[float64],
-    class_width: int | float,
     assumed_mean: int | float | None,
-    assumed_mean_formula: AssumedMeanFormulaType = AssumedMeanFormulaType.X_MINUS_A_OVER_W,
+    assumed_mean_formula: Literal["mean", "std", "percentiles"] = "mean",
     decimals: int = 4,
 ) -> float:
-    """
-    Convenience function to compute grouped mean.
-    
-    Args:
-        lc_limits: Lower class limits
-        uc_limits: Upper class limits
-        freq: Frequencies
-        decimals: Number of decimal places
-        raise_on_error: Whether to raise exceptions or return NaN
-        
-    Returns:
-        Calculated mean
-    """
-    compute_class = GroupedStatisticsCalculator()
-    result = compute_class.compute(
+    "Compute mean for grouped data"
+    compute_class = GroupedStatisticsCalculator(
         lower_limits=lower_limits,
         upper_limits=upper_limits,
         freq=freq,
-        class_width=class_width,
+        statistic="mean",
         assumed_mean=assumed_mean,
         assumed_mean_formula=assumed_mean_formula,
         decimals=decimals
     )
-    
-    return result
+    return compute_class.compute()
 
 
-def sta_eda_grouped_percentiles(
-    lower_limits: list[int | float] | NDArray[float64],
-    upper_limits: list[int | float] | NDArray[float64],
-    freq: list[int | float] | NDArray[float64],
-    class_width: int | float,
-    decimals: int = 4,
-) -> float:
-    """
-    Convenience function to compute grouped mean.
-    
-    Args:
-        lc_limits: Lower class limits
-        uc_limits: Upper class limits
-        freq: Frequencies
-        decimals: Number of decimal places
-        raise_on_error: Whether to raise exceptions or return NaN
-        
-    Returns:
-        Calculated mean
-    """
-    compute_class = GroupedStatisticsCalculator()
-    result = compute_class.compute(
-        lower_limits=lower_limits,
-        upper_limits=upper_limits,
-        freq=freq,
-        class_width=class_width,
-        decimals=decimals
-    )
-    
-    return result
+def sta_eda_grouped_std() -> None:
+    pass
+
+
+def sta_eda_grouped_std_steps() -> None:
+    pass
+
+
+def sta_eda_grouped_percentiles() -> None:
+    pass
+
+
+def sta_eda_grouped_percentiles_steps() -> None:
+    pass
 
 
 def sta_freq_tally(
@@ -575,7 +560,7 @@ def sta_freq_tally(
             Frequencies per class.
         cumfreq : ndarray
             Cumulative frequencies.
-        col_names : pandas.Index
+        columns : pandas.Index
             Column names of the frequency table.
         stats : ResultDict
             Summary statistics with fields:
@@ -591,7 +576,7 @@ def sta_freq_tally(
             - ``max`` : float
                 Maximum value.
             - ``range`` : float
-                Data range.
+                Data range (max - min).
             - ``mean`` : float
                 Arithmetic mean.
             - ``var`` : float
@@ -649,7 +634,14 @@ def sta_freq_tally(
     >>> result.cumfreq
     array([ 2,  8, 19, 33, 43, 47, 50], dtype=int64)
     """
-    data_arr = asarray(data, dtype=float64)
+    params = {}
+    data_arr = arr_to_numeric(data, dtype=float)
+    params.update(
+        {
+            "data": data,
+            "data_parsed": data_arr
+        }
+    )
     
     if data_arr.ndim != 1:
         raise ValueError("Data must be 1-dimensional")
@@ -782,6 +774,7 @@ def sta_freq_tally(
     nrows, ncols = dframe.shape
     
     return ResultDict(
+        params=params,
         table=dframe,
         class_limits=dframe["Class"].values,
         freq=freq_col.values,

@@ -1,6 +1,8 @@
 import copy
 from typing import Any
 
+from stemfard.core.errors import ParamAttributeError
+
 
 class FrequencyTallyWarning(UserWarning):
     """
@@ -33,8 +35,10 @@ class ResultDict(dict):
             return self[name]
         except KeyError:
             msg = f", use obj.stats.{name} instead" if name in STATS else ""
-            raise AttributeError(
-                f"'ResultDict' object has no attribute {name!r}{msg}"
+            raise ParamAttributeError(
+                obj="ResultDict",
+                name=name,
+                msg=msg    
             ) from None
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -50,8 +54,10 @@ class ResultDict(dict):
             del self[name]
         except KeyError:
             msg = f", use obj.stats.{name} instead" if name in STATS else ""
-            raise AttributeError(
-                f"'ResultDict' object has no attribute {name!r}{msg}"
+            raise ParamAttributeError(
+                obj="ResultDict",
+                name=name,
+                msg=msg    
             ) from None
 
     def __repr__(self) -> str:

@@ -34,7 +34,7 @@ __email__ = "stemfard@stemfard.org"
 from .core import FrequencyTallyWarning
 
 from .stats import (
-    sta_freq_tally, sta_eda_grouped_mean, sta_eda_grouped_sd,
+    sta_freq_tally, sta_eda_grouped_mean, sta_eda_grouped_std,
     sta_eda_grouped_percentiles
 )
 
@@ -45,7 +45,7 @@ __all__ = [
     # stats
     "sta_freq_tally",
     "sta_eda_grouped_mean",
-    "sta_eda_grouped_sd",
+    "sta_eda_grouped_std",
     "sta_eda_grouped_percentiles"
 ]
 
