@@ -297,7 +297,7 @@ def sta_freq_tally(
         conf_level=conf_level,
         steps_compute=False,
         steps_detailed=False,
-        show_bg=False
+        steps_bg=False
     ).answer()
     n_sqrt = sqrt(full_data.size)
     p = (25, 50, 75)

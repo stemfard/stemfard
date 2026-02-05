@@ -50,7 +50,7 @@ class ParseDescriptives:
     quartiles_use_linear: bool = True
     steps_compute: bool = True
     steps_detailed: bool = True
-    show_bg: bool = True
+    steps_bg: bool = True
     param_name: str = "x",
     decimals: int = 4
     
@@ -58,7 +58,7 @@ class ParseDescriptives:
         return (
             "ParseDescriptives(statistic, data, freq, assumed_mean, "
             "var_formula, ddof, p, quartiles_use_linear, steps_compute, "
-            "steps_detailed, show_bg, decimals)"
+            "steps_detailed, steps_bg, decimals)"
         )
     
 
@@ -74,7 +74,7 @@ def parse_descriptives(
     quartiles_use_linear: bool = True,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     param_name: str = "x",
     decimals: int = 4
 ) -> ParseDescriptives:
@@ -160,7 +160,7 @@ def parse_descriptives(
     raw_params.update({
         "steps_compute": steps_compute,
         "steps_detailed": steps_detailed,
-        "show_bg": show_bg,
+        "steps_bg": steps_bg,
         "param_name": param_name
     })
     
@@ -171,7 +171,7 @@ def parse_descriptives(
     steps_detailed = verify_boolean(steps_detailed, default=True)
     if not steps_compute:
         steps_detailed = False
-    show_bg = verify_boolean(show_bg, default=True)
+    steps_bg = verify_boolean(steps_bg, default=True)
     param_name = verify_str_identifier(param_name)
     
     if param_name != "x" and "(x)" not in param_name:
@@ -182,7 +182,7 @@ def parse_descriptives(
     parsed_params.update({
         "steps_compute": steps_compute,
         "steps_detailed": steps_detailed,
-        "show_bg": show_bg,
+        "steps_bg": steps_bg,
         "param_name": param_name
     })
     if statistic not in ["min", "max"]:
@@ -200,7 +200,7 @@ def parse_descriptives(
         quartiles_use_linear=quartiles_use_linear,
         steps_compute=steps_compute,
         steps_detailed=steps_detailed,
-        show_bg=show_bg,
+        steps_bg=steps_bg,
         param_name=param_name,
         decimals=decimals,
         params=CoreParamsResult(raw=raw_params, parsed=parsed_params)

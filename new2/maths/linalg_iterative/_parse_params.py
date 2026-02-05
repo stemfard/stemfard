@@ -31,7 +31,7 @@ class ParseLinalgIterative:
     maxit: int = 50
     steps_compute: bool = True
     steps_detailed: bool = True
-    show_bg: bool = True
+    steps_bg: bool = True
     param_names: tuple[str, str] = ("A", "b")
     decimals: int = 14
     
@@ -53,7 +53,7 @@ def parse_linalg_iterative(
     maxit: int = 50,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     param_names: tuple[str, str] = ("A", "b"),
     decimals: int = 14
 ) -> ParseLinalgIterative:
@@ -176,11 +176,11 @@ def parse_linalg_iterative(
     
     # steps_compute: bool = True
     # steps_detailed: bool = True
-    # show_bg: bool = True
+    # steps_bg: bool = True
     
     steps_compute = verify_boolean(steps_compute, default=True)
     steps_detailed = verify_boolean(steps_detailed, default=True)
-    show_bg = verify_boolean(show_bg, default=True)
+    steps_bg = verify_boolean(steps_bg, default=True)
     
     # param_names: str = "x",
     
@@ -211,7 +211,7 @@ def parse_linalg_iterative(
         maxit=maxit,
         steps_compute=steps_compute,
         steps_detailed=steps_detailed,
-        show_bg=show_bg,
+        steps_bg=steps_bg,
         param_names=param_names,
         decimals=decimals,
         params=CoreParamsResult(raw=raw_params, parsed=parsed_params)

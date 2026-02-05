@@ -117,7 +117,9 @@ def str_remove_tzeros(
 def str_color_values(
     value: Any,
     color: str | None = None,
-    add_box: bool = False
+    add_box: bool = False,
+    remove_italic: bool = False,
+    add_tags: bool = False
 ) -> str:
     """
     Colorizes the given value with the specified color and optionally
@@ -139,23 +141,85 @@ def str_color_values(
     
     Examples
     --------
-    >>> str_color_values('Hello', color='red', add_box=False)
+    >>> str_color_math('Hello', color='red', add_box=False)
     '{\\color{red}{Hello}}'
-    >>> str_color_values('World', color='blue', add_box=True)
+    >>> str_color_math('World', color='blue', add_box=True)
     '\\fbox{\\color{blue}{World}}'
-    >>> str_color_values('Test', add_box=True)
+    >>> str_color_math('Test', add_box=True)
     '\\fbox{\\color{#1E90FF}{Test}}'  # Assuming ColorCSS.BLUE = '#1E90FF'
     """
     if color is None:
         color = ColorCSS.COLORDEFAULT.value
+        
+    if remove_italic:
+        value = f"\\text{{{value}}}"
     
     colored_text = f"{{\\color{{{color}}}{{{value}}}}}"
     
     if add_box:
         colored_text = f"\\boxed{{{colored_text}}}"
-    
+        
+    if add_tags:
+        colored_text = f"\\( {colored_text} \\)"
     return colored_text
 
+
+def str_color_text(
+    value: Any, color: str | None = None, add_box: bool = False
+) -> str:
+    return str_color_values(
+        value=value,
+        color=color,
+        add_box=add_box,
+        remove_italic=True,
+        add_tags=True
+    )
+
+
+def str_color_math(
+    value: Any,
+    color: str | None = None,
+    add_box: bool = False
+) -> str:
+    return str_color_values(
+        value=value,
+        color=color,
+        add_box=add_box,
+        remove_italic=False,
+        add_tags=False
+    )
+    
+    
+def str_eqtn_number(num: str) -> str:
+    color = ColorCSS.COLORDEFAULT.value
+    return (
+        f"{{\\color{{{color}}}{{\\qquad\\qquad \\cdots "
+        f"\\qquad\\qquad ({num})}}}}"
+    )
+
+
+def str_omitted(msg: str | None = None) -> str:
+    
+    steps_mathjax: list[str] = []
+    
+    steps_mathjax.append("\\( \\qquad\\qquad\\vdots \\)")
+    if msg:
+        steps_mathjax.append(f"\\( \\qquad\\textit{{{msg} omitted}} \\)")
+    else:
+        steps_mathjax.append(f"\\( \\qquad\\textit{{some output omitted}} \\)")
+    steps_mathjax.append("\\( \\qquad\\qquad\\vdots \\)")
+    
+    return steps_mathjax
+
+
+def str_caption(
+    label: str = "Table", num: str = ..., caption: str = ...
+) -> str:
+    caption_str = (
+        f"{str_color_text(f'{label} {num}:')} \\( \\textit{{{caption}}} \\)"
+    )
+    return f"<div>{caption_str}</div>"
+    
 
 def str_data_join(
     values: list | tuple | ndarray,

@@ -4,7 +4,7 @@ from numpy import array, asarray, full, hstack, isin, nan, ndarray, vstack
 from stemcore import str_data_join
 from stemlab.core.htmlatex import tex_array_to_latex
 
-from stemfard.core._strings import str_color_values, str_remove_tzeros
+from stemfard.core._strings import str_caption, str_color_math, str_remove_tzeros
 from stemfard.core._type_aliases import IntegerSequenceArrayLike, SequenceArrayLike
 from stemfard.core._enumerate import ColorCSS
 
@@ -64,7 +64,7 @@ def one_d_array_stack(
                 r, c = divmod(idx, ncols)
 
             if 0 <= r < nrows and 0 <= c < ncols and A[r, c] is not nan:
-                A[r, c] = str_color_values(A[r, c], add_box=True)
+                A[r, c] = str_color_math(A[r, c], add_box=True)
 
     # ---- Highlight by value (fallback) ----
     elif color_vals is not None:
@@ -75,9 +75,9 @@ def one_d_array_stack(
 
         if first_only and mask.any():
             r, c = next(zip(*mask.nonzero()))
-            A[r, c] = str_color_values(A[r, c], add_box=True)
+            A[r, c] = str_color_math(A[r, c], add_box=True)
         else:
-            A[mask] = [str_color_values(x, add_box=True) for x in A[mask]]
+            A[mask] = [str_color_math(x, add_box=True) for x in A[mask]]
 
     result = tex_array_to_latex(A, brackets="").replace("nan", "")
     
@@ -474,8 +474,13 @@ def highlight_arrays_vals(
 
 def highlight_array_vals_arr(
     arr: SequenceArrayLike,
-    index: list[str] | None = None,
-    col_names: list[str] | None = None,
+    index: list[str] | str | None = None,
+    col_names: list[str] | str | None = None,
+    heading: str = "",
+    last_row: str | None = "",
+    cap_label: str = "Table",
+    cap_number: int | str = ...,
+    cap_title: str = ...,
     align: str = "r",
     brackets: Literal["[]", "()", "||"] | None = "[]",
     inline: bool = False,  # True -> use \smallmatrix
@@ -498,10 +503,19 @@ def highlight_array_vals_arr(
     
 ):
     
+    nrows, ncols = asarray(arr).shape
+    
     if col_names is not None:
+        if isinstance(col_names, str) and col_names == "auto":
+            col_names = [f"C_{idx + 1}" for idx in range(ncols)]
         arr = vstack((col_names, arr))
         
     if index is not None:
+        if isinstance(index, str) and index == "auto":
+            if last_row is None:
+                index = [heading] + list(range(1, nrows + 1))
+            else:
+                index = [heading] + list(range(1, nrows)) + [last_row]
         index = asarray(index).flatten().reshape(-1, 1)
         arr = hstack((index, arr))
         
@@ -534,4 +548,9 @@ def highlight_array_vals_arr(
         .replace("\\end", "\\\\ \\hline\\end", 1)
     )
     
-    return arr
+    caption = str_caption(label=cap_label, num=cap_number, caption=cap_title)
+    
+    return (
+        f"<div style='margin-top:15px;'></div>{caption} "
+        f"\\( \\displaystyle {arr} \\)"
+    )

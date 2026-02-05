@@ -43,7 +43,7 @@ class BaseLinalgSolveIterative:
         maxit: int = 10,
         steps_compute: bool = True,
         steps_detailed: bool = True,
-        show_bg: bool = True,
+        steps_bg: bool = True,
         param_names: tuple[str, str] = ("A", "b"),
         decimals: int = 14
     ):
@@ -61,7 +61,7 @@ class BaseLinalgSolveIterative:
             maxit=maxit,
             steps_compute=steps_compute,
             steps_detailed=steps_detailed,
-            show_bg=show_bg,
+            steps_bg=steps_bg,
             param_names=param_names,
             decimals=decimals
         )
@@ -79,7 +79,7 @@ class BaseLinalgSolveIterative:
         self.maxit = parsed_params.maxit
         self.steps_compute = parsed_params.steps_compute
         self.steps_detailed = parsed_params.steps_detailed
-        self.show_bg = parsed_params.show_bg
+        self.steps_bg = parsed_params.steps_bg
         self.param_names = parsed_params.param_names
         self.decimals = parsed_params.decimals
         
@@ -104,7 +104,7 @@ class BaseLinalgSolveIterative:
         return around(self.A, self.decimals)
     
     @property
-    def b_rnd(self) -> NDArray[float64]:
+    def beta_rnd(self) -> NDArray[float64]:
         return around(self.b, self.decimals)
     
     @property

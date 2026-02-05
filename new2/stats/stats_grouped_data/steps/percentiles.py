@@ -205,7 +205,7 @@ def _step_II_cumfreq_curve(
             f"= {round_to_nearest_half_up(at_percentiles_y[index], is_delta=True)} \\)"
         )
         if index != m - 1:
-            steps_mathjax.append(StemConstants.BORDER_HTML)
+            steps_mathjax.append(StemConstants.BORDER_HTML_DASHED)
 
     steps_temp = html_style_bg(
         title=f"\\( \\textbf{{REMARK}} \\)", bg="#F5F5F5"
@@ -269,7 +269,7 @@ def _step_II_cumfreq_curve(
             )
             
             if index != n - 1:
-                steps_mathjax.append(StemConstants.BORDER_HTML)
+                steps_mathjax.append(StemConstants.BORDER_HTML_DASHED)
         
         steps_temp = html_style_bg(
             title=f"\\( \\textbf{{REMARK}} \\)", bg="#F5F5F5"

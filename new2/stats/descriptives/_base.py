@@ -127,7 +127,7 @@ class BaseDescriptives:
         quartiles_use_linear: bool = False,
         steps_compute: bool = True,
         steps_detailed: bool = True,
-        show_bg: bool = True,
+        steps_bg: bool = True,
         param_name: str = "x",
         decimals: int = 4
     ):
@@ -143,7 +143,7 @@ class BaseDescriptives:
             quartiles_use_linear=quartiles_use_linear,
             steps_compute=steps_compute,
             steps_detailed=steps_detailed,
-            show_bg=show_bg,
+            steps_bg=steps_bg,
             param_name=param_name,
             decimals=decimals
         )
@@ -161,7 +161,7 @@ class BaseDescriptives:
         self.quartiles_use_linear = parsed_params.quartiles_use_linear
         self.steps_compute = parsed_params.steps_compute
         self.steps_detailed = parsed_params.steps_detailed
-        self.show_bg = parsed_params.show_bg
+        self.steps_bg = parsed_params.steps_bg
         self.param_name = parsed_params.param_name
         self.decimals = parsed_params.decimals
         

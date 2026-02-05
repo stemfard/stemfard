@@ -517,11 +517,11 @@ def stats_percentiles(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> AnswerStepsResult:
-    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals)._stats_percentiles(
-        steps_compute=steps_compute, show_bg=show_bg, decimals=decimals
+    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals)._stats_percentiles(
+        steps_compute=steps_compute, steps_bg=steps_bg, decimals=decimals
     )
 
 
@@ -529,11 +529,11 @@ def stats_p25(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg:bool = True,
+    steps_bg:bool = True,
     use_linear: bool = False,
     decimals: int = 4
 ) -> AnswerStepsResult:
-    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals)._stats_p25(
+    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals)._stats_p25(
         steps_compute=steps_compute,
         use_linear=use_linear,
         decimals=decimals
@@ -544,11 +544,11 @@ def stats_p50(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     use_linear: bool = False,
     decimals: int = 4
 ) -> AnswerStepsResult:
-    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals)._stats_p50(
+    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals)._stats_p50(
         steps_compute=steps_compute,
         use_linear=use_linear,
         decimals=decimals
@@ -559,11 +559,11 @@ def stats_p75(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     use_linear: bool = False,
     decimals: int = 4
 ) -> AnswerStepsResult:
-    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals)._stats_p75(
+    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals)._stats_p75(
         steps_compute=steps_compute,
         use_linear=use_linear,
         decimals=decimals
@@ -574,9 +574,9 @@ def stats_zscores(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> AnswerStepsResult:
-    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals)._stats_zscores(
-        steps_compute=steps_compute, show_bg=show_bg, decimals=decimals
+    return StatsPosition(statistic="xxx", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals)._stats_zscores(
+        steps_compute=steps_compute, steps_bg=steps_bg, decimals=decimals
     )

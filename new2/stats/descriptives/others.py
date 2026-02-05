@@ -138,7 +138,7 @@ def stats_dfn(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True
+    steps_bg: bool = True
 ) -> StatsOthers:
     """
     Calculate the degrees of freedom for the dataset.
@@ -165,7 +165,7 @@ def stats_dfn(
         statistic="dfn",
         data=data,
         steps_compute=steps_compute,
-        show_bg=show_bg
+        steps_bg=steps_bg
     )
     
     return result._stats_dfn()
@@ -175,7 +175,7 @@ def stats_dfn2(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True
+    steps_bg: bool = True
 ) -> StatsOthers:
     """
     Calculate the degrees of freedom for the dataset.
@@ -202,7 +202,7 @@ def stats_dfn2(
         statistic="xxx",
         data=data,
         steps_compute=steps_compute,
-        show_bg=show_bg
+        steps_bg=steps_bg
     )
     
     return result._stats_dfn2()
@@ -303,12 +303,12 @@ def stats_total(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsOthers:
     result = StatsOthers(
         statistic="xxx", data=data, steps_compute=steps_compute,
-        show_bg=show_bg, decimals=decimals
+        steps_bg=steps_bg, decimals=decimals
     )
     
     return result._stats_total()
@@ -319,12 +319,12 @@ def stats_mean_ci(
     *,
     conf_level: float = 0.95,
     steps_compute: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsOthers:
     result = StatsOthers(
         statistic="mean_ci", data=data, conf_level=conf_level,
-        steps_compute=steps_compute, show_bg=show_bg, decimals=decimals
+        steps_compute=steps_compute, steps_bg=steps_bg, decimals=decimals
     )
     return result._stats_mean_ci()
     
@@ -334,12 +334,12 @@ def stats_sem(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsOthers:
     return StatsOthers(
         statistic="xxx", data=data, steps_compute=steps_compute,
-        steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals
+        steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals
     )._stats_sem()
     
     
@@ -348,10 +348,10 @@ def stats_cv(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsOthers:
     return StatsOthers(
         statistic="xxx", data=data, steps_compute=steps_compute,
-        steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals
+        steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals
     )._stats_cv()

@@ -35,7 +35,7 @@ __email__ = "stemfard@stemfard.org"
 from .core import *
 from .stats.descriptives import *
 from .stats.regression_linear import *
-from .maths.linalg_matrix_arithmetics import *
+from .maths.linalg_arithmetics import *
 from .maths.linalg_iterative import *
 
 #========================================================================#

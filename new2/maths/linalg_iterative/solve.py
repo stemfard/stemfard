@@ -22,7 +22,7 @@ def linalg_jacobi(
     maxit: int = 50,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     param_names: tuple[str, str] = ("A", "b"),
     decimals: int = 12
 ) -> LinalgSolveJacobi:
@@ -59,7 +59,7 @@ def linalg_jacobi(
         "maxit": maxit,
         "steps_compute": steps_compute,
         "steps_detailed": steps_detailed,
-        "show_bg": show_bg,
+        "steps_bg": steps_bg,
         "param_names": param_names,
         "decimals": decimals
     }
@@ -83,7 +83,7 @@ def linalg_gauss_seidel(
     maxit: int = 50,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     param_names: tuple[str, str] = ("A", "b"),
     decimals: int = 12
 ) -> LinalgSolveGaussSeidel:
@@ -102,7 +102,7 @@ def linalg_gauss_seidel(
         "maxit": maxit,
         "steps_compute": steps_compute,
         "steps_detailed": steps_detailed,
-        "show_bg": show_bg,
+        "steps_bg": steps_bg,
         "param_names": param_names,
         "decimals": decimals
     }
@@ -126,7 +126,7 @@ def linalg_sor(
     maxit: int = 50,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     param_names: tuple[str, str] = ("A", "b"),
     decimals: int = 12
 ) -> LinalgSolveSOR:
@@ -144,7 +144,7 @@ def linalg_sor(
         "maxit": maxit,
         "steps_compute": steps_compute,
         "steps_detailed": steps_detailed,
-        "show_bg": show_bg,
+        "steps_bg": steps_bg,
         "param_names": param_names,
         "decimals": decimals
     }
@@ -167,7 +167,7 @@ def linalg_conjugate_gradient(
     maxit: int = 50,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     param_names: tuple[str, str] = ("A", "b"),
     decimals: int = 12
 ) -> LinalgSolveConjugateGradient:
@@ -185,7 +185,7 @@ def linalg_conjugate_gradient(
         "maxit": maxit,
         "steps_compute": steps_compute,
         "steps_detailed": steps_detailed,
-        "show_bg": show_bg,
+        "steps_bg": steps_bg,
         "param_names": param_names,
         "decimals": decimals
     }

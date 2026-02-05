@@ -43,6 +43,45 @@ def html_border(
         f'margin:{margin};"></div> <!-- TEXBORDER {type}|{color} -->'
     )
     return border
+
+
+def html_border_solid(
+    loc: Literal['top', 'bottom', 'left', 'right'] = "top", 
+    width: int = 1,
+    color: str = "#ddd", 
+    margin: str = "13px 0px"
+) -> str:
+    
+    return (
+        f'<div style="border-{loc}:{width}px solid {color}; '
+        f'margin:{margin};"></div> <!-- TEXBORDER solid|{color} -->'
+    )
+    
+
+def html_border_dashed(
+    loc: Literal['top', 'bottom', 'left', 'right'] = "top", 
+    width: int = 1,
+    color: str = "#ddd", 
+    margin: str = "13px 0px"
+) -> str:
+    
+    return (
+        f'<div style="border-{loc}:{width}px dashed {color}; '
+        f'margin:{margin};"></div> <!-- TEXBORDER dashed|{color} -->'
+    )
+
+
+def html_border_dotted(
+    loc: Literal['top', 'bottom', 'left', 'right'] = "top", 
+    width: int = 1,
+    color: str = "#ddd", 
+    margin: str = "13px 0px"
+) -> str:
+    
+    return (
+        f'<div style="border-{loc}:{width}px dotted {color}; '
+        f'margin:{margin};"></div> <!-- TEXBORDER dotted|{color} -->'
+    )
         
 
 def html_style_bg(
@@ -57,6 +96,11 @@ def html_style_bg(
     mb: int = 15,
     lspace: int = 1
 ) -> str:
+    try:
+        bg = bg.value
+    except:
+        pass
+    
     style = (
         f'border-top:{lw}px solid {bcolor}; '
         f'border-bottom:{lw}px solid {bcolor}; '

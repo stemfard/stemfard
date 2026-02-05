@@ -102,7 +102,7 @@ class ArithmeticMeanSteps(BaseDescriptives):
                 mformula = FORMULAS_MEAN["mean_and_no_assumed_mean_and_freq"]
                 steps_mathjax.append(f"\\[ {mformula} \\]")
         
-        steps_mathjax.append(StemConstants.BORDER_HTML_BG)
+        steps_mathjax.append(StemConstants.BORDER_HTML_BLUE_WIDTH_2)
         
         return steps_mathjax
     
@@ -114,7 +114,7 @@ class ArithmeticMeanSteps(BaseDescriptives):
         steps_mathjax: list[str] = []
         
         if border_before:
-            steps_mathjax.append(StemConstants.BORDER_HTML)
+            steps_mathjax.append(StemConstants.BORDER_HTML_DASHED)
         
         mformula = FORMULAS_MEAN["mean_and_no_assumed_mean_and_no_freq"]
         steps_mathjax.append(f"\\( {mformula} \\)")
@@ -230,7 +230,7 @@ class ArithmeticMeanSteps(BaseDescriptives):
             "assumed_mean": self.assumed_mean,
             "steps_compute": self.steps_compute,
             "steps_detailed": self.steps_detailed,
-            "show_bg": self.show_bg,
+            "steps_bg": self.steps_bg,
             "param_name": self.param_name,
             "decimals": self.decimals
         }
@@ -295,7 +295,7 @@ class ArithmeticMeanSteps(BaseDescriptives):
             "assumed_mean": self.assumed_mean,
             "steps_compute": self.steps_compute,
             "steps_detailed": self.steps_detailed,
-            "show_bg": self.show_bg,
+            "steps_bg": self.steps_bg,
             "param_name": self.param_name,
             "decimals": self.decimals
         }
@@ -378,7 +378,7 @@ class ArithmeticMeanSteps(BaseDescriptives):
             "assumed_mean": self.assumed_mean,
             "steps_compute": self.steps_compute,
             "steps_detailed": self.steps_detailed,
-            "show_bg": self.show_bg,
+            "steps_bg": self.steps_bg,
             "param_name": self.param_name,
             "decimals": self.decimals
         }

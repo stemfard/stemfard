@@ -19,12 +19,12 @@ class StatsLocation(BaseDescriptives):
             "assumed_mean": self.assumed_mean,
             "steps_compute": self.steps_compute,
             "steps_detailed": self.steps_detailed,
-            "show_bg": self.show_bg,
+            "steps_bg": self.steps_bg,
             "param_name": self.param_name,
             "decimals": self.decimals
         }
         
-        if self.show_bg:
+        if self.steps_bg:
             steps_temp = ArithmeticMeanSteps(**params).bg_arithmetic_mean()
             steps_mathjax.extend(steps_temp)
             
@@ -195,7 +195,7 @@ def stats_mean(
     assumed_mean: int | float | None = None,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     param_name: str = "x",
     decimals: int = 4
 ) -> StatsLocation:
@@ -213,7 +213,7 @@ def stats_mean(
         freq=None,
         steps_compute=False,
         steps_detailed=False,
-        show_bg=False,
+        steps_bg=False,
         param_name="marks"
     )
     >>> result.answer
@@ -221,7 +221,7 @@ def stats_mean(
     """
     return StatsLocation(
         statistic="mean", data=data, freq=freq, assumed_mean=assumed_mean,
-        steps_compute=steps_compute, show_bg=show_bg, param_name=param_name,
+        steps_compute=steps_compute, steps_bg=steps_bg, param_name=param_name,
         decimals=decimals
     )._stats_mean()
     
@@ -231,12 +231,12 @@ def stats_median(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsLocation:
     return StatsLocation(
         statistic="median", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed,
-        show_bg=show_bg, decimals=decimals
+        steps_bg=steps_bg, decimals=decimals
     )._stats_median()
     
     
@@ -245,12 +245,12 @@ def stats_mode(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsLocation:
     return StatsLocation(
         statistic="mode", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed,
-        show_bg=show_bg, decimals=decimals
+        steps_bg=steps_bg, decimals=decimals
     )._stats_mode()
 
 
@@ -259,12 +259,12 @@ def stats_multimode(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsLocation:
     return StatsLocation(
         statistic="multimode", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed,
-        show_bg=show_bg, decimals=decimals
+        steps_bg=steps_bg, decimals=decimals
     )._stats_multimode()
     
     
@@ -273,12 +273,12 @@ def stats_harmonic(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsLocation:
     return StatsLocation(
         statistic="harmonic", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed,
-        show_bg=show_bg, decimals=decimals
+        steps_bg=steps_bg, decimals=decimals
     )._stats_harmonic()
 
 
@@ -287,10 +287,10 @@ def stats_geometric(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsLocation:
     return StatsLocation(
         statistic="geometric", data=data, steps_compute=steps_compute, steps_detailed=steps_detailed,
-        show_bg=show_bg, decimals=decimals
+        steps_bg=steps_bg, decimals=decimals
     )._stats_geometric()

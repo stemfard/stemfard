@@ -48,7 +48,7 @@ def bg_matrices_dlu(abs_rel_tol: str) -> list[str]:
         "Iterations are performed until the following is satisfied."
     )
     steps_mathjax.append(TOLERANCE[abs_rel_tol])
-    steps_mathjax.append(StemConstants.BORDER_HTML_BG)
+    steps_mathjax.append(StemConstants.BORDER_HTML_BLUE_WIDTH_2)
     
     return steps_mathjax
 

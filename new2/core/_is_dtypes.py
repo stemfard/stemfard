@@ -1,6 +1,8 @@
 from typing import Any
 
-from sympy import Expr, sympify
+from numpy import array, issubdtype, number, prod
+from sympy import Expr, Matrix, SympifyError, flatten, sympify
+from sympy.core.relational import Relational
 
 from verifyparams.core.errors import SYMPIFY_ERRORS
 
@@ -81,3 +83,128 @@ def is_symexpr(obj: Any) -> bool:
             return False
 
     return False
+
+
+def is_any_element_negative(M: list[int | float]) -> bool:
+    """
+    Check if any of the elements in the array are negative, including 
+    symbolic expressions or string.
+
+    Parameters
+    ----------
+    array_ : array_like
+        The array-like object to be checked.
+
+    Returns
+    -------
+    bool
+        Returns True if any element in the array is negative, 
+        otherwise returns False.
+
+    Raises
+    ------
+    Exception
+        If the input array cannot be converted to a numpy array.
+
+    Examples
+    --------
+    >>> import stemlab as stm
+    >>> stm.is_any_element_negative([1, 2, 3])
+    False
+    >>> stm.is_any_element_negative([-1, 2, 3])
+    True
+    >>> stm.is_any_element_negative([['b', 3, 8], [3, 1, 9]])
+    False
+    >>> stm.is_any_element_negative([[4, 'a', 9], ['-g', 8, 5]])
+    True
+    """
+    try:
+        M = array(M)
+    except (TypeError, ValueError) as e:
+        raise ValueError(str(e)) from e
+    if issubdtype(M.dtype, number): # all values are numeric
+        return any(M < 0)
+    else: # contains symbols
+        return any([is_negative(value) for value in flatten(M)])
+
+
+def is_negative(value: int | float | str | Expr) -> bool:
+    return str(value).strip().startswith("-")
+    
+
+def is_negative_detailed(value: int | float | str | Expr) -> bool:
+    """
+    Safely checks whether a value is negative.
+    Works for numeric, string, symbolic expressions, and relational objects.
+    Never raises an exception.
+    """
+    try:
+        expr = sympify(value)
+    except SympifyError:
+        return str(value).strip().startswith("-")
+
+    try:
+        # Known numeric or symbolic negativity
+        if hasattr(expr, "is_negative") and expr.is_negative is not None:
+            return bool(expr.is_negative)
+
+        # Relational expressions
+        if isinstance(expr, Relational):
+            try:
+                lhs_val = float(expr.lhs)
+                rhs_val = float(expr.rhs)
+                return (lhs_val - rhs_val) < 0
+            except Exception:
+                return False
+
+        # Numeric fallback
+        try:
+            return float(expr) < 0
+        except Exception:
+            return str(expr).strip().startswith("-")
+    except Exception:
+        return False
+
+
+def is_numeric(string: str) -> bool:
+    """
+    Check if a string represents a purely numeric value
+    (i.e., no free symbols or symbolic expressions).
+
+    Parameters
+    ----------
+    string : str
+        The string to be checked.
+
+    Returns
+    -------
+    bool
+        True if the string represents a numeric value 
+        (int or float), False otherwise.
+    """
+    from stemlab.core.symbolic import sym_sympify
+    try:
+        val = sym_sympify(string, is_expr=True)
+        return val.is_number and not val.free_symbols
+    except (SympifyError, ValueError, ArithmeticError, TypeError):
+        return False
+    
+    
+def contains_symbols(obj: Any) -> bool:
+    """
+    Check if a scalar or matrix contains any symbolic variables.
+    Works with SymPy objects and plain Python/numpy data.
+    """
+    try:
+        return bool(Matrix(obj).free_symbols)
+    except (ValueError, TypeError, AttributeError, SympifyError):
+        return bool(getattr(obj, 'free_symbols', set()))
+    
+    
+def is_all_symbolic(obj: Any) -> bool:
+    try:
+        Matrix(obj)
+    except (ValueError, TypeError, AttributeError):
+        return False
+    is_symbol_list = [contains_symbols(b_ij) for b_ij in flatten(obj)]
+    return sum(is_symbol_list) == prod(obj.shape)

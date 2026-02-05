@@ -39,12 +39,12 @@ def stats_skew(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsShape:
     result = StatsShape(
         statistic="xxx", data=data, steps_compute=steps_compute,
-        steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals
+        steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals
     )
     return result._stats_skew()
     
@@ -54,11 +54,11 @@ def stats_kurt(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsShape:
     result = StatsShape(
         statistic="xxx", data=data, steps_compute=steps_compute,
-        steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals
+        steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals
     )
     return result._stats_kurt()

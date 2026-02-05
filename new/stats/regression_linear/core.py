@@ -37,7 +37,7 @@ class LinearRegressionCalculations(BaseLinearRegression):
                 "coefficients"
             )
         
-        if self.stderrors:
+        if self.std_errors:
             stderrors = (
                 f" calculated in \\( \\text{{Standard erors}} \\) section."
             )

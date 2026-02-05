@@ -280,12 +280,12 @@ def stats_range(
     data: SequenceArrayLike,
     *,
     steps_compute: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsDispersion:
     return StatsDispersion(
         statistic="range", data=data, steps_compute=steps_compute,
-        show_bg=show_bg, decimals=decimals
+        steps_bg=steps_bg, decimals=decimals
     )._stats_range()
     
 
@@ -338,7 +338,7 @@ def stats_iqr(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsDispersion:
     result = StatsDispersion(
@@ -353,12 +353,12 @@ def stats_iqd(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsDispersion:
     result = StatsDispersion(
         statistic="xxx", data=data, steps_compute=steps_compute,
-        steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals
+        steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals
     )
     return result._stats_iqd()
 
@@ -368,12 +368,12 @@ def stats_mad(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsDispersion:
     result = StatsDispersion(
         statistic="xxx", data=data,steps_compute=steps_compute,
-        steps_detailed=steps_detailed, show_bg=show_bg, decimals=decimals
+        steps_detailed=steps_detailed, steps_bg=steps_bg, decimals=decimals
     )
     return result._stats_mad()
 
@@ -383,7 +383,7 @@ def stats_mead(
     *,
     steps_compute: bool = True,
     steps_detailed: bool = True,
-    show_bg: bool = True,
+    steps_bg: bool = True,
     decimals: int = 4
 ) -> StatsDispersion:
     result = StatsDispersion(

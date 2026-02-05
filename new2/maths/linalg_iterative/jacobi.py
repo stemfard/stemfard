@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from sympy import Matrix
 
 from stemfard.core._html import html_bg_level2
-from stemfard.core._strings import str_color_values, str_remove_tzeros
+from stemfard.core._strings import str_color_math, str_remove_tzeros
 from stemfard.core._type_aliases import Array2DLike, SequenceArrayLike
 from stemfard.core.constants import StemConstants
 from stemfard.maths.linalg_iterative._base import (
@@ -34,13 +34,13 @@ def bg_jacobi_algebra() -> list[str]:
         f"x_{{j}}^{{(k)}}\\Big)\\Bigg] \\qquad \\cdots \\qquad (1)"
     )
     
-    steps_mathjax.append(f"\\( \\displaystyle\\quad {str_color_values(eqtn)} \\)")
+    steps_mathjax.append(f"\\( \\displaystyle\\quad {str_color_math(eqtn)} \\)")
     steps_mathjax.append(
         "for \\( i = 1, \\: 2, \\: \\cdots, \\: n \\) and "
         "\\( k = 0, \\: 1, \\: \\cdots, \\: n - 1 \\)"
     )
     
-    steps_mathjax.append(StemConstants.BORDER_HTML_BG)
+    steps_mathjax.append(StemConstants.BORDER_HTML_BLUE_WIDTH_2)
         
     return steps_mathjax
 
@@ -53,14 +53,14 @@ def bg_jacobi_matrix(
     
     steps_mathjax.append(
         "In matrix form, the Jacobi iterative scheme is given by Equation "
-        f"\\( {str_color_values(value='(1)')} \\)."
+        f"\\( {str_color_math(value='(1)')} \\)."
     )
     steps_temp = (
         f"x^{{(k + 1)}} = T_{{j}} \\: x^{{(k)}} + c_{{j}} "
         "\\qquad \\cdots \\qquad (1)"
     )
     steps_mathjax.append(
-        f"\\( \\qquad {str_color_values(value=steps_temp)} \\)"
+        f"\\( \\qquad {str_color_math(value=steps_temp)} \\)"
     )
     steps_mathjax.append(
         "for \\( k = 0, \\: 1, \\: 2, \\: \\cdots, \\: n-1 \\)"
@@ -124,7 +124,7 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
         steps_mathjax: list[str] = []
         table_results = self._table_latex
         
-        steps_mathjax.append(StemConstants.BORDER_HTML_BG)
+        steps_mathjax.append(StemConstants.BORDER_HTML_BLUE_WIDTH_2)
         
         steps_mathjax.append(
             "The approximations obtained in all the above iterations are "
@@ -146,7 +146,7 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
         
         return {
             "latex": [
-                StemConstants.BORDER_HTML_BG,
+                StemConstants.BORDER_HTML_BLUE_WIDTH_2,
                 f"\\( {table_results.latex} \\)"
             ],
             "steps": steps_mathjax
@@ -163,16 +163,16 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
         x_rnd = x.copy()
         x_new = x.copy()
         
-        if self.show_bg:
+        if self.steps_bg:
             temp_steps = bg_jacobi_algebra()
             steps_mathjax.extend(temp_steps)
         
         if self.steps_compute:
             steps_mathjax.append(
                 f"The Jacobi representation of the given system of "
-                f"\\( {str_color_values(self.nrows)} \\) linear equations is "
-                f"given by Equations \\( {str_color_values('1.1')} \\) "
-                f"through \\( {str_color_values(f'1.{self.nrows}')} \\) "
+                f"\\( {str_color_math(self.nrows)} \\) linear equations is "
+                f"given by Equations \\( {str_color_math('1.1')} \\) "
+                f"through \\( {str_color_math(f'1.{self.nrows}')} \\) "
                 "presented below."
             )
             
@@ -182,7 +182,7 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                 steps_temp.append(
                     f"\\( \\displaystyle\\quad x_{{i + 1}}^{{(k + 1)}} "
                     f"= \\frac{{1}}{{{self.A_rnd[i, i]}}} \\: "
-                    f"\\Big[{self.b_rnd[i, 0]} "
+                    f"\\Big[{self.beta_rnd[i, 0]} "
                 )
                 
                 for j in range(self.ncols):
@@ -193,11 +193,11 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                 
                 steps_temp.append(
                     "\\Big] \\qquad \\cdots \\qquad "
-                    f"{str_color_values(f'1.{i + 1}')} \\)____"
+                    f"{str_color_math(f'1.{i + 1}')} \\)____"
                 )
                 
             steps_mathjax.extend("".join(steps_temp).split("____"))
-            steps_mathjax.append(StemConstants.BORDER_HTML)
+            steps_mathjax.append(StemConstants.BORDER_HTML_DASHED)
             
             steps_mathjax.append(
                 "The iterations are performed using the above Equations as is "
@@ -207,16 +207,16 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                 f"\\( \\color{{green}}{{\\textbf{{Remarks:}}}} \\) The values "
                 f"of \\( b_{{i}} \\) and \\( a_{{ij}} \\: (i, \\: j = 1, \\: "
                 f"\\cdots, {self.nrows}) \\) in Equations "
-                f"\\( {str_color_values('(1.j.k)')} \\) in the steps that "
+                f"\\( {str_color_math('(1.j.k)')} \\) in the steps that "
                 "appear below are:"
             )
             steps_mathjax.append(
-                f"\\( \\quad {str_color_values(f'b_{{i}}')} \\longleftarrow \\) "
+                f"\\( \\quad {str_color_math(f'b_{{i}}')} \\longleftarrow \\) "
                 f"Element in the \\( i^{{th}} \\) position of the vector of "
                 "constant (RHS)."
             )
             steps_mathjax.append(
-                f"\\( \\quad {str_color_values(f'a_{{ij}}')} \\longleftarrow \\) "
+                f"\\( \\quad {str_color_math(f'a_{{ij}}')} \\longleftarrow \\) "
                 f"Element in the \\( i^{{th}} \\) row and \\( j^{{th}} \\) "
                 "column of the coefficients matrix."
             )
@@ -247,9 +247,9 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                 for i in range(self.nrows):
                     steps_mathjax.append(
                         f"Let \\( k = {k} \\) in Equation "
-                        f"\\( {str_color_values(f'(1.{i + 1})')} \\) to "
+                        f"\\( {str_color_math(f'(1.{i + 1})')} \\) to "
                         "get Equation "
-                        f"\\( {str_color_values(f'(1.{i + 1}.{k + 1})')} \\) "
+                        f"\\( {str_color_math(f'(1.{i + 1}.{k + 1})')} \\) "
                         "below."
                     )
                     
@@ -266,12 +266,12 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                         if i != j:
                             steps_temp.append(
                                 f" - a_{{{i + 1}{j + 1}}} \\: "
-                                f"{str_color_values(f'x_{{{j + 1}}}^{{({k})}}')}"
+                                f"{str_color_math(f'x_{{{j + 1}}}^{{({k})}}')}"
                             )
     
                     steps_temp.append(
                         f"\\Big] \\qquad \\cdots \\qquad "
-                        f"{str_color_values(f'(1.{i + 1}.{k + 1})')} \\)"
+                        f"{str_color_math(f'(1.{i + 1}.{k + 1})')} \\)"
                     )
                     steps_mathjax.append("".join(steps_temp))
                         
@@ -282,14 +282,14 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                     steps_temp.append(
                         f"\\( \\displaystyle\\quad "
                         f"= \\frac{{1}}{{{self.A_rnd[i, i]}}} "
-                        f"\\Big[{self.b_rnd[i, 0]}"
+                        f"\\Big[{self.beta_rnd[i, 0]}"
                     )
                     
                     for j in range(self.ncols):
                         if i != j:
                             steps_temp.append(
                                 f"+ {self.A_rnd[i, j]} \\: "
-                                f"\\left( {str_color_values(x_rnd[j, 0])} "
+                                f"\\left( {str_color_math(x_rnd[j, 0])} "
                                 "\\right)"
                             )
                             
@@ -305,7 +305,7 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                     steps_temp.append(
                         f"\\( \\displaystyle\\quad "
                         f"= \\frac{{1}}{{{self.A_rnd[i, i]}}} "
-                        f"\\: \\Big[{self.b_rnd[i, 0]}"
+                        f"\\: \\Big[{self.beta_rnd[i, 0]}"
                     )
                     
                     for j in range(self.ncols):
@@ -334,7 +334,7 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                         f"= {float(around(result, self.decimals))} \\)"
                     )
 
-                    steps_mathjax.append(StemConstants.BORDER_HTML_BG)
+                    steps_mathjax.append(StemConstants.BORDER_HTML_BLUE_WIDTH_2)
                     
                     x_new[i, 0] = result
                      
@@ -374,7 +374,7 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
         table_jacobi = self._table_latex
         matrices_ldu: MatricesLDU = self.matrices_dlu
         
-        if self.show_bg:
+        if self.steps_bg:
             temp_steps = bg_jacobi_matrix(abs_rel_tol=self.abs_rel_tol)
             steps_mathjax.extend(temp_steps)
             
@@ -383,12 +383,12 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
             
             steps_mathjax.append(
                 f"With the above matrices, the values of \\( T_{{j}} \\) and "
-                f"\\( c_{{j}} \\) in Equation \\( {str_color_values('(1)')} \\) "
+                f"\\( c_{{j}} \\) in Equation \\( {str_color_math('(1)')} \\) "
                 "are calculated as follows."
             )
             
             steps_mathjax.append(
-                f"\\( { str_color_values('T_{{j}} = D^{{-1}}(L + U)') } \\)"
+                f"\\( { str_color_math('T_{{j}} = D^{{-1}}(L + U)') } \\)"
             )
             
             l_latex = (
@@ -411,10 +411,10 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                 f"\\( \\quad = {tex_to_latex_arr(self.tj_rnd)} \\)"
             )
             
-            steps_mathjax.append(StemConstants.BORDER_HTML)
+            steps_mathjax.append(StemConstants.BORDER_HTML_DASHED)
             
             steps_mathjax.append(
-                f"\\( {str_color_values(f'c_{{j}} = D^{{-1}}~b')} \\)"
+                f"\\( {str_color_math(f'c_{{j}} = D^{{-1}}~b')} \\)"
             )
             steps_mathjax.append(
                 "\\( \\quad "
@@ -424,17 +424,17 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                 f"\\( \\quad = {tex_to_latex_arr(self.cj_rnd)} \\)"
             )
             
-            steps_mathjax.append(StemConstants.BORDER_HTML)
+            steps_mathjax.append(StemConstants.BORDER_HTML_DASHED)
             
             steps_mathjax.append(
                 f"Substitute the above values of \\( T_{{j}} \\) and "
                 f"\\( c_{{j}} \\) into  Equation "
-                f"\\( {str_color_values('(1)')} \\) as follows."
+                f"\\( {str_color_math('(1)')} \\) as follows."
             )
             steps_mathjax.append(
                 f"\\( x^{{(k + 1)}} = T_{{j}} \\: "
-                f"{str_color_values('x^{(k)}')} + c_{{j}} \\qquad \\cdots "
-                f"\\qquad {str_color_values('(2)')} \\)"
+                f"{str_color_math('x^{(k)}')} + c_{{j}} \\qquad \\cdots "
+                f"\\qquad {str_color_math('(2)')} \\)"
             )
             
             tj_latex = tex_to_latex_arr(self.tj_rnd, brackets="[]")
@@ -443,11 +443,11 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
             
             steps_mathjax.append(
                 f"\\( \\quad = {tj_latex} \\: "
-                f"{str_color_values(xj_latex)} + {cj_latex} \\)"
+                f"{str_color_math(xj_latex)} + {cj_latex} \\)"
             )
             steps_mathjax.append(
                 f"Iterations are performed using Equation "
-                f"\\( {str_color_values('(2)')} \\) above. These iterations "
+                f"\\( {str_color_math('(2)')} \\) above. These iterations "
                 "are presented below."
             )
             
@@ -462,44 +462,44 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                 if k == 0:
                     steps_mathjax.append(
                         f"This iteration uses the vector of initial guesses "
-                        f"\\( {str_color_values(f'x^{{({k})}}')} \\) "
+                        f"\\( {str_color_math(f'x^{{({k})}}')} \\) "
                         "to approximate the values of "
-                        f"\\( {str_color_values(f'x^{{({k + 1})}}')} \\)."
+                        f"\\( {str_color_math(f'x^{{({k + 1})}}')} \\)."
                     )
                 else:
                     steps_mathjax.append(
                         f"This iteration uses the result "
-                        f"\\( {str_color_values(f'x^{{({k})}}')} \\) "
+                        f"\\( {str_color_math(f'x^{{({k})}}')} \\) "
                         f"obtained in iteration {k} above to approximate the "
                         f"values of "
-                        f"\\( {str_color_values(f'x^{{({k + 1})}}')} \\)."
+                        f"\\( {str_color_math(f'x^{{({k + 1})}}')} \\)."
                     )
                 
                 steps_mathjax.append(
                     f"Let \\( k = {k} \\) in Equation "
-                    f"\\( {str_color_values('(2)')} \\) to get Equation "
-                    f"\\( {str_color_values(f'(2.{k + 1})')} \\) below."
+                    f"\\( {str_color_math('(2)')} \\) to get Equation "
+                    f"\\( {str_color_math(f'(2.{k + 1})')} \\) below."
                 )
                 steps_mathjax.append(
                     f"\\( \\quad x^{{({k + 1})}} "
-                    f"= T_{{j}} \\: {str_color_values(f'x^{{({k})}}')} "
+                    f"= T_{{j}} \\: {str_color_math(f'x^{{({k})}}')} "
                     f"+ c_{{j}} \\qquad \\cdots \\qquad "
-                    f"{str_color_values(f'2.{k + 1}')} \\)"
+                    f"{str_color_math(f'2.{k + 1}')} \\)"
                 )
                 
                 if k == 0:
                     steps_mathjax.append(
-                        f"where \\( {str_color_values('x^{(0)}')} \\) is the "
+                        f"where \\( {str_color_math('x^{(0)}')} \\) is the "
                         "vector of initial guesses."
                     )
                 else:
                     steps_mathjax.append(
-                        f"where \\( {str_color_values(f'x^{{({k})}}')} \\) "
+                        f"where \\( {str_color_math(f'x^{{({k})}}')} \\) "
                         "is the approximated solution from iteration "
                         f"\\( {k} \\) above."
                     )
                 
-                xj_k_latex = str_color_values(tex_to_latex_arr(arr=xj_k_rnd))
+                xj_k_latex = str_color_math(tex_to_latex_arr(arr=xj_k_rnd))
                  
                 steps_mathjax.append(
                     f"\\( x^{{({k + 1})}} = {tj_latex} {xj_k_latex} "
@@ -519,7 +519,7 @@ class LinalgSolveJacobi(BaseLinalgSolveIterative):
                     f"\\( \\quad = {tex_to_latex_arr(xj_k_rnd)} \\)"
                 )
                            
-                steps_mathjax.append(StemConstants.BORDER_HTML)
+                steps_mathjax.append(StemConstants.BORDER_HTML_DASHED)
                   
                 steps_mathjax.append(
                     "From the above results,  summary of approximations from iteration "
