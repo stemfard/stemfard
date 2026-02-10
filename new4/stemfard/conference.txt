@@ -1,0 +1,51 @@
+StemfardCon: Conference on Pedagogical and Reproducible Computational Methods
+StemfardCon is an academic conference focused on pedagogical and reproducible 
+approaches to teaching and learning computational STEM techniques using 
+step-wise execution frameworks.
+
+STEMSteps Conf provides an academic forum for educators and students to share 
+reproducible, step-wise approaches to teaching computational STEM techniques, 
+emphasizing transparency, pedagogy, and executable reasoning.
+
+Primary Themes
+
+Initial Value Problems (IVPs)
+
+Interpolation and Approximation
+
+Linear and Nonlinear Regression
+
+Iterative Techniques for Numerical Computation
+
+Error Analysis and Convergence
+
+Algorithmic Transparency in STEM Education
+
+Methodological Focus
+
+Step-wise execution and inspectable reasoning
+
+Teaching with intermediate computational states
+
+Reproducible computational workflows
+
+Student-centered exploration of algorithms
+
+Bridging mathematical theory and executable code
+
+
+2. How to Announce the Award
+
+Early in the conference:
+
+“At the end of the day, we will award a laptop to the participant who demonstrates exceptional engagement or creative use of the API.”
+
+Keep reminding participants subtly during demos or workshops.
+
+At the closing session:
+
+Show a certificate or trophy alongside the laptop.
+
+Give a short citation of achievement, e.g.:
+
+“For demonstrating outstanding engagement, creativity, and pedagogical insight using the STEMSteps API.”
